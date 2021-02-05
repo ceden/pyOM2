@@ -1,0 +1,25 @@
+
+# need to load modules:
+# module purge
+# module load gcc/4.8.2 openmpi/1.8.4-gcc48
+
+
+# netcdf library
+cdf = /sw/rhel6-x64/netcdf/netcdf_fortran-4.4.2-gcc48/bin/nf-config
+
+
+lapackdir = /sw/rhel6-x64/numerics/netlib_lapack-3.5.0-gcc48/lib
+blasdir   = /sw/rhel6-x64/numerics/openblas-0.2.14-haswell-gcc48/lib
+
+# fortran front end
+F90 = mpif90
+CDFFLAGS = -I`$(cdf) --includedir`  `$(cdf) --flibs` 
+MPIFLAGS =  
+#F90FLAGS = -O0 -xCORE-AVX2  
+F90FLAGS = -L$(lapackdir) -l:liblapack_LINUX.a -L$(blasdir) -l:libopenblas.a -fconvert=big-endian -O3 -Wall
+
+
+
+
+
+
