@@ -9,7 +9,7 @@ module main_module
 !---------------------------------------------------------------------------------
 !     constants and parameter
 !---------------------------------------------------------------------------------
-      real*8, parameter :: version = 2.2
+      real*8, parameter :: version = 2.3
       real*8, parameter :: pi      = 3.14159265358979323846264338327950588
       real*8, parameter :: radius  = 6370.0e3        ! Earth radius in m
       real*8, parameter :: degtom  = radius/180.0*pi ! conversion degrees latitude to meters
