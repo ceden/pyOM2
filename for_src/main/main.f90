@@ -145,7 +145,6 @@ program main
  
         call tic('diag')
         call diagnose
-        call qg_diag
         call toc('diag')
  
         ! shift time 
@@ -278,7 +277,5 @@ subroutine setup
     if (my_pe==0) print'(a/)','        -> switch on enable_implicit_vert_fricton        '
     call halt_stop(' in setup')
   endif
-
-  call qg_filter_init
 end subroutine setup
 
