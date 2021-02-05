@@ -4,6 +4,7 @@ code   = ../for_src
 bin    = ../bin
 
 %.o: %.f90
+	test -d ${bin} || mkdir ${bin}
 	cp $< ${code}/config.f90
 	(cd ${code};make $(target) )
 
