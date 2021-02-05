@@ -37,7 +37,7 @@ for_files = $(main)/main_module.f90  \
             $(iso)/isoneutral_diffusion.f90 $(iso)/isoneutral_friction.f90 \
             $(iso)/isoneutral.f90 $(iso)/isoneutral_ml.f90 \
             $(ide)/idemix.f90 $(ide)/idemix_low_mode.f90 $(ide)/idemix_friction.f90 \
-            $(ide)/idemix_spectral.f90 $(ide)/idemix_group_vel.f90 $(ide)/idemix3.f90  \
+            $(ide)/idemix_spectral.f90 $(ide)/idemix_group_vel.f90 $(ide)/idemix3.f90 $(ide)/idemix_leewaves.f90 \
             $(rossmix)/rossmix.f90 $(rossmix)/rossmix_flux.f90 $(rossmix)/rossmix_integrate.f90  \
             $(rossmix)/rossmix_friction.f90 $(rossmix)/rossmix_group_velocity.f90  \
             $(rossmix)/rossmix_reflect.f90  \
