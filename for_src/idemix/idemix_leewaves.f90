@@ -230,8 +230,11 @@ subroutine integrate_leewaves
  dt_loc = dt_tracer/idemix_lee_ts_fac
  do n=1,idemix_lee_ts_fac
  
-  call leewave_superbee(flux_p, c_lee,E_lee_p(:,:,:,taup1))
-  call leewave_superbee(flux_m,-c_lee,E_lee_m(:,:,:,taup1))
+  !call leewave_superbee(flux_p, c_lee,E_lee_p(:,:,:,taup1))
+  !call leewave_superbee(flux_m,-c_lee,E_lee_m(:,:,:,taup1))
+
+  call leewave_superbee(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,nz,flux_p, c_lee,E_lee_p(:,:,:,taup1))
+  call leewave_superbee(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,nz,flux_m,-c_lee,E_lee_m(:,:,:,taup1))
 
   do j = js_pe,je_pe
     do i = is_pe,ie_pe   
@@ -596,14 +599,18 @@ end subroutine
 
 
 
-subroutine leewave_superbee(flux,vel,var)
+subroutine leewave_superbee(is_,ie_,js_,je_,nz_,flux,vel,var)
  use main_module
  use idemix_module
  implicit none
  integer :: k,i,j,kp2,km1
- real*8 :: flux(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,0:nz)
- real*8 :: var(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
- real*8 :: vel(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
+ integer, intent(in) :: is_,ie_,js_,je_,nz_
+ real*8, intent(inout)  :: flux(is_:ie_,js_:je_,0:nz_)
+ real*8, intent(inout)  :: var(is_:ie_,js_:je_,nz_)
+ real*8, intent(inout)  :: vel(is_:ie_,js_:je_,nz_)
+ !real*8 :: flux(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,0:nz)
+ !real*8 :: var(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
+ !real*8 :: vel(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
  real*8 :: Rjp,Rj,Rjm,uCFL,Cr
  real*8 :: Limiter
  
