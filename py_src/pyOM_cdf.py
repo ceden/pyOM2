@@ -260,4 +260,4 @@ class pyOM_cdf(pyOM):
    
 
 if __name__ == "__main__":
-   print 'I will do nothing'
+   print('I will do nothing')

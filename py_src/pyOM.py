@@ -1,5 +1,7 @@
+from __future__ import print_function
 
 import numpy
+
 
 class pyOMError(Exception):
    """ generic exception of class pyOM
@@ -22,7 +24,7 @@ class pyOM:
         from mpi4py import MPI
         import pyOM_code_MPI 
         self.fortran = pyOM_code_MPI
-        print ' checking MPI'
+        print(' checking MPI')
         self.mpi_comm = MPI.COMM_WORLD  
         self.fortran.my_mpi_init( self.mpi_comm.py2f())
         # determine domain decomposition from commandline input
@@ -32,7 +34,7 @@ class pyOM:
           if len(sys.argv) < 3: raise pyOMError(' not enough parameter')
           M.n_pes_i = sys.argv[1]
           M.n_pes_j = sys.argv[2]
-          if M.my_pe==0: print 'using ',M.n_pes_i,' x ',M.n_pes_j ,' PEs'
+          if M.my_pe==0: print('using ',M.n_pes_i,' x ',M.n_pes_j ,' PEs')
      except ImportError: 
         import pyOM_code
         self.fortran = pyOM_code
@@ -86,8 +88,8 @@ class pyOM:
      # check setup
      if self.fortran.tke_module.enable_tke and not self.fortran.main_module.enable_implicit_vert_friction:
        if  self.fortran.main_module.my_pe==0: 
-              print 'ERROR: use TKE model only with implicit vertical friction '
-              print '        -> switch on enable_implicit_vert_fricton        '
+              print('ERROR: use TKE model only with implicit vertical friction ')
+              print('        -> switch on enable_implicit_vert_fricton        ')
        raise pyOMError
 
      return
@@ -107,9 +109,9 @@ class pyOM:
      enditt = M.itt+int(runlen/M.dt_tracer)
      startitt = M.itt*1
      if M.my_pe == 0 : 
-        print 'Starting integration for ',runlen,' s/ ',int(runlen/M.dt_tracer),' time steps'
-        print ' from time step ',startitt,' to ',enditt-1
-        print ' with snapshot interval of ',snapint_itt,' time steps'
+        print('Starting integration for ',runlen,' s/ ',int(runlen/M.dt_tracer),' time steps')
+        print(' from time step ',startitt,' to ',enditt-1)
+        print(' with snapshot interval of ',snapint_itt,' time steps')
 
      for M.itt in range(startitt,enditt):
        self.time = M.itt*M.dt_tracer
@@ -118,7 +120,7 @@ class pyOM:
        self.time_goes_by()
      M.itt = M.itt+1  
      
-     if M.my_pe==0: print ' end of integration '  
+     if M.my_pe==0: print(' end of integration ' ) 
      return
    
 
@@ -221,9 +223,9 @@ class pyOM:
        M=self.fortran.main_module        
        if M.my_pe==0:
          if M.enable_hydrostatic:
-             print 'diagnosing at %f s, itt=%i, solver itt = %i' %(M.itt*M.dt_tracer,M.itt,M.congr_itts)
+             print('diagnosing at %f s, itt=%i, solver itt = %i' %(M.itt*M.dt_tracer,M.itt,M.congr_itts))
          else:
-             print 'diagnosing at %f s, itt=%i, solver itt = %i (non hydro itts=%i)' %(M.itt*M.dt_tracer,M.itt,M.congr_itts,M.congr_itts_non_hydro)
+             print('diagnosing at %f s, itt=%i, solver itt = %i (non hydro itts=%i)' %(M.itt*M.dt_tracer,M.itt,M.congr_itts,M.congr_itts_non_hydro))
        return
 
    def if2py(self,i):
@@ -284,4 +286,4 @@ class pyOM:
        """
        return
         
-if __name__ == "__main__": print 'I will do nothing'
+if __name__ == "__main__": print('I will do nothing')

@@ -1,6 +1,14 @@
 
 import numpy,code,os
-import Tkinter, tkMessageBox, tkFileDialog, ScrolledText
+try:
+ # backward compatibility   
+ import Tkinter, tkMessageBox, tkFileDialog, ScrolledText
+except:
+ import tkinter as Tkinter
+ import tkinter.scrolledtext as ScrolledText
+ import tkinter.messagebox as tkMessageBox
+ import tkinter.filedialog as tkFileDialog
+    
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
@@ -249,14 +257,20 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
 
    def _plotit(self):
         """ make the actual plot in a canvas
+          here we have to work on...
         """
         from matplotlib.backends.backend_agg import FigureCanvasAgg
-        import matplotlib.backends.tkagg  as tkagg
+        try:
+           #backward compatibility
+           import matplotlib.backends.tkagg  as tkagg
+        except:
+           import matplotlib.backends.backend_tkagg  as tkagg 
         canvas = FigureCanvasAgg(self.figure)
         canvas.draw()
         if hasattr(self,'main_area_id'): self.main_area.delete(self.main_area_id)
         self.main_area_id=self.main_area.create_image(self.image_width/2,self.image_height/2,image=self._tkphoto)
-        tkagg.blit(self._tkphoto, canvas.renderer._renderer, colormode=2)
+        #tkagg.blit(self._tkphoto, canvas.renderer._renderer, colormode=2)
+        canvas.blit()#self._tkphoto, canvas.renderer._renderer)#, colormode=2)
         return
 
    

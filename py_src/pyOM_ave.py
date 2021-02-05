@@ -46,7 +46,7 @@ class pyOM_ave(pyOM_cdf):
        #check if name is in use
        for d in self.diag:
             if d['name'] == name: 
-                print ' name already in use'
+                print(' name already in use')
                 return
        # append diagnostics
        self.diag.append({'name':name,'long_name':long_name,'units':units,'grid':grid} )
@@ -131,4 +131,4 @@ class pyOM_ave(pyOM_cdf):
    
 
 if __name__ == "__main__":
-   print 'I will do nothing'
+   print('I will do nothing')
