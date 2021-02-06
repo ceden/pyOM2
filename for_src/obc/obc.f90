@@ -49,6 +49,36 @@ end subroutine set_obc_boundary_xyz
 
 
 
+subroutine set_obc_boundary_xyp(is_,ie_,js_,je_,np,a)
+ !---------------------------------------------------------------------------------
+ ! routine is called in main
+ !---------------------------------------------------------------------------------
+ use main_module   
+ use obc_module   
+ implicit none
+ integer, intent(in) :: is_,ie_,js_,je_,np
+ real*8, intent(inout)  :: a(is_:ie_,js_:je_,np)
+ integer :: i,k
+ if (my_blk_j == 1 .and. enable_obc_south) then
+   do k=1,np
+    do i=is_pe-onx,ie_pe+onx
+      a(i,1-onx:0,k)=a(i,1,k)
+    enddo
+   enddo
+ endif
+ if (my_blk_j == n_pes_j .and. enable_obc_north) then
+   do k=1,np
+    do i=is_pe-onx,ie_pe+onx
+      a(i,ny+1:ny+onx,k)=a(i,ny,k)
+    enddo
+   enddo
+ endif
+end subroutine set_obc_boundary_xyp
+
+
+
+
+
 subroutine set_obc_streamfct
  !---------------------------------------------------------------------------------
  ! routine is called in solve_streamfunction
