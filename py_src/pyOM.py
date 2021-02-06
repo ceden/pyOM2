@@ -1,7 +1,5 @@
-from __future__ import print_function
 
 import numpy
-
 
 class pyOMError(Exception):
    """ generic exception of class pyOM
@@ -20,18 +18,28 @@ class pyOM:
      """ initialize everyting
      """
      # try to load module and fortran code with MPI bindings or try to live without MPI
-     try:     
-        from mpi4py import MPI
-        import pyOM_code_MPI 
+     try:         
+        try:    
+          from mpi4py import MPI
+        except:
+          print ('WARNNG: cannot load module mpi4py')
+          print (' parallel pyOM version inactive ')
+          raise ImportError
+        try:    
+          import pyOM_code_MPI 
+        except:
+          print ('WARNNG: cannot load module pyOM_code_MPI')  
+          print (' parallel pyOM version inactive ')
         self.fortran = pyOM_code_MPI
-        print(' checking MPI')
+        #print(' checking MPI')
         self.mpi_comm = MPI.COMM_WORLD  
         self.fortran.my_mpi_init( self.mpi_comm.py2f())
         # determine domain decomposition from commandline input
         M=self.fortran.main_module        # fortran module with model variables
+        if M.my_pe==0: print (' using parallel pyOM version with ',M.n_pes,' processors')
         if M.n_pes>1:
           import sys
-          if len(sys.argv) < 3: raise pyOMError(' not enough parameter')
+          if len(sys.argv) < 3: raise pyOMError(' not enough input parameter')
           M.n_pes_i = sys.argv[1]
           M.n_pes_j = sys.argv[2]
           if M.my_pe==0: print('using ',M.n_pes_i,' x ',M.n_pes_j ,' PEs')
@@ -56,8 +64,8 @@ class pyOM:
      self.fortran.allocate_eke_module()
      self.fortran.allocate_idemix_module()
      self.fortran.allocate_obc_module()
-     self.fortran.allocate_tracer_module()
-
+     self.fortran.allocate_tracer_module()   
+        
      # setup the grid by user defined method
      self.set_grid()
      self.fortran.calc_grid()
@@ -136,11 +144,11 @@ class pyOM:
      
      self.set_forcing()
        
-     if I.enable_idemix:                           self.fortran.set_idemix_parameter()
-     if I.enable_idemix_m2 or I.enable_idemix_niw: self.fortran.set_spectral_parameter()
-           
+     self.fortran.set_idemix_parameter()      
      self.fortran.set_eke_diffusivities()
      self.fortran.set_tke_diffusivities()
+     
+     self.fortran.rossmix_main()   
         
      if M.enable_momentum_equation:      self.fortran.momentum()
      if M.enable_thermodynamic_equation:
@@ -151,11 +159,8 @@ class pyOM:
 
      if E.enable_eke: self.fortran.integrate_eke()
 
-     if I.enable_idemix_m2:   self.fortran.integrate_idemix_m2()
-     if I.enable_idemix_niw:  self.fortran.integrate_idemix_niw()
      if I.enable_idemix:      self.fortran.integrate_idemix()
-     if I.enable_idemix_m2 or I.enable_idemix_niw:  self.fortran.wave_interaction()
-
+   
      if T.enable_tke:    self.fortran.integrate_tke()
 
      #---------------------------------------------------------------------------------

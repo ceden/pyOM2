@@ -12,6 +12,9 @@ except:
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
+import matplotlib.animation as animation
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 from pyOM_ave import pyOM_ave
 
 
@@ -48,7 +51,7 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
        menu.add_command(label="Start integration", command=self.start)
        menu.add_command(label="Stop integration", command=self.stop)
        menu.add_command(label="Reset integration", command=self.reset)
-       menu.add_command(label="Plot", command=self.prep_plot)
+       menu.add_command(label="Plot", command=self.plot)
        menubar.add_cascade(label="Control", menu=menu)
        menu = Tkinter.Menu(menubar, tearoff=0)
        menu.add_command(label="Shell", command=self.shell)
@@ -57,11 +60,9 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
        self.master.config(menu=menubar) 
 
        # plotting area on window
-       #self.image_height=480; self.image_width=640
        self.image_height=500; self.image_width=800
        self.main_area= Tkinter.Canvas(self,height=self.image_height,width=self.image_width)
        self.main_area.pack(side=Tkinter.TOP)
-       self._tkphoto = Tkinter.PhotoImage(master=self.main_area)
      
        # text area on window
        self.time_step_list = ScrolledText.ScrolledText(self,height=5,state=Tkinter.NORMAL,bd=2)
@@ -123,12 +124,11 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
        self.figure.set_figwidth(float(self.image_width)/self.figure.get_dpi() )
        self.figure.set_figheight(float(self.image_height)/self.figure.get_dpi() )
        self.figure.text(0.5,0.5,self.pyOM_vstr,ha='center',va='center',fontsize='xx-large',color='darkblue')
-
-       # first plot
-       self._plotit() 
+          
+       # first plot and animate
        self.itt_str.set('time step %i' % M.itt)
        self.time = M.itt*M.dt_tracer
-       self.prep_plot()
+       
        self.shell_on=False
      self.run = self.mainloop
      return
@@ -136,7 +136,7 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
    def set_signal(self,cmd):
        """ send a signal to other PEs, only called by PE0
        """
-       i=numpy.zeros( (1,),'i', order='F')
+       i = numpy.zeros( (1,),numpy.intc, order='F')       
        i[0]=self.semaphore.index(cmd)
        self.fortran.pe0_bcast_int(i)
        return
@@ -144,8 +144,9 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
    def get_signal(self):
        """ get a signal from PE 0
        """
-       i=numpy.zeros( (1,),'i', order='F')
+       i = numpy.zeros( (1,),numpy.intc, order='F')
        self.fortran.pe0_bcast_int(i)
+       i =  int(i[0])
        if i>len( self.semaphore) or i<0: raise pyOMError('wrong signal in get_signal')         
        return self.semaphore[i]
    
@@ -158,6 +159,10 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
                 self.snapint.set( int( snapint/self.fortran.main_module.dt_tracer) )
                 self.aveint.set( int( snapint/self.fortran.main_module.dt_tracer) )
            self.scale_both()
+           #if M.itt >0:
+           #  self.ani = animation.FuncAnimation(self.figure,self.plot(), interval=0)
+           #else:
+           self.plot()
            Tkinter.mainloop() # PE0 will only return when quit button is hit, it is now event driven
        else:
          stop = False
@@ -202,7 +207,7 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
        self.time_step()
        if numpy.mod(M.itt,self.aveint.get())  == 0 and self.enable_average.get()==1: self.do_average()
        if numpy.mod(M.itt,self.snapint.get()) == 0 and self.enable_snapshot.get()==1: self.do_snapshot()
-       if numpy.mod(M.itt,self.plotint.get()) == 0 and  self.enable_plotting.get()==1 : self.prep_plot()
+       if numpy.mod(M.itt,self.plotint.get()) == 0 and  self.enable_plotting.get()==1 : self.plot()
        self.time_goes_by()
        self.after(1,self.one_time_step)
      return
@@ -240,37 +245,20 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
         self.write_snap_cdf()
         return
       
-   def prep_plot(self):
-        """ prepare to make a plot
-        """
-        M=self.fortran.main_module         # fortran module with model variables
-        if hasattr(self,'make_plot'):
-           text='\nplotting at %12.4es solver itts=%i'% (self.time, M.congr_itts)
-           if not M.enable_hydrostatic:
+   def plot(self):
+        """ make a plot
+        """     
+        M=self.fortran.main_module         # fortran module with model variables   
+        text='\nplotting at %12.4es solver itts=%i'% (self.time, M.congr_itts)
+        if not M.enable_hydrostatic:
                 text = text + ' (non hydro itts=%i)'%M.congr_itts_non_hydro
-           self.print_text(text)
+        self.print_text(text) 
+        if hasattr(self,'make_plot'): 
            self.make_plot() 
-           self._plotit()
-        if not hasattr(self,'make_plot'):
+        else :  
            self.print_text('\ncannot plot: missing method make_plot')
-        return
-
-   def _plotit(self):
-        """ make the actual plot in a canvas
-          here we have to work on...
-        """
-        from matplotlib.backends.backend_agg import FigureCanvasAgg
-        try:
-           #backward compatibility
-           import matplotlib.backends.tkagg  as tkagg
-        except:
-           import matplotlib.backends.backend_tkagg  as tkagg 
-        canvas = FigureCanvasAgg(self.figure)
-        canvas.draw()
-        if hasattr(self,'main_area_id'): self.main_area.delete(self.main_area_id)
-        self.main_area_id=self.main_area.create_image(self.image_width/2,self.image_height/2,image=self._tkphoto)
-        #tkagg.blit(self._tkphoto, canvas.renderer._renderer, colormode=2)
-        canvas.blit()#self._tkphoto, canvas.renderer._renderer)#, colormode=2)
+        self.figcanvas = FigureCanvasTkAgg(self.figure, self.main_area)
+        self.figcanvas.get_tk_widget().grid(row=0, column=0)
         return
 
    
@@ -314,7 +302,7 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
         self.stop()
         self.set_initial_conditions()   
         self.fortran.calc_initial_conditions()
-        self.prep_plot()
+        self.plot()
         return
       
    def read(self):
