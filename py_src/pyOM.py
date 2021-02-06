@@ -160,7 +160,7 @@ class pyOM:
 
      if E.enable_eke: self.fortran.integrate_eke()
 
-     if I.enable_idemix:      self.fortran.integrate_idemix()
+     if I.enable_idemix: self.fortran.integrate_idemix()
    
      if T.enable_tke:    self.fortran.integrate_tke()
 
@@ -190,11 +190,11 @@ class pyOM:
      if I.enable_idemix_m2: 
          self.fortran.border_exchg_xyp(M.is_pe-M.onx,M.ie_pe+M.onx,M.js_pe-M.onx,M.je_pe+M.onx,I.e_m2[:,:,:,M.taup1-1],I.np) 
          self.fortran.setcyclic_xyp   (M.is_pe-M.onx,M.ie_pe+M.onx,M.js_pe-M.onx,M.je_pe+M.onx,I.e_m2[:,:,:,M.taup1-1],I.np)
-         self.fortran.set_obc_boundary_xyz(M.is_pe-M.onx,M.ie_pe+M.onx,M.js_pe-M.onx,M.je_pe+M.onx,I.e_m2[:,:,:,M.taup1-1],I.np)
+         self.fortran.set_obc_boundary_xyp(M.is_pe-M.onx,M.ie_pe+M.onx,M.js_pe-M.onx,M.je_pe+M.onx,I.e_m2[:,:,:,M.taup1-1],I.np)
      if I.enable_idemix_niw: 
          self.fortran.border_exchg_xyp(M.is_pe-M.onx,M.ie_pe+M.onx,M.js_pe-M.onx,M.je_pe+M.onx,I.e_niw[:,:,:,M.taup1-1],I.np) 
          self.fortran.setcyclic_xyp   (M.is_pe-M.onx,M.ie_pe+M.onx,M.js_pe-M.onx,M.je_pe+M.onx,I.e_niw[:,:,:,M.taup1-1],I.np)
-         self.fortran.set_obc_boundary_xyz(M.is_pe-M.onx,M.ie_pe+M.onx,M.js_pe-M.onx,M.je_pe+M.onx,I.e_niw[:,:,:,M.taup1-1],I.np)
+         self.fortran.set_obc_boundary_xyp(M.is_pe-M.onx,M.ie_pe+M.onx,M.js_pe-M.onx,M.je_pe+M.onx,I.e_niw[:,:,:,M.taup1-1],I.np)
        
      if M.enable_hydrostatic: self.fortran.vertical_velocity()
      return
