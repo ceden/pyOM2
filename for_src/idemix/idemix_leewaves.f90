@@ -606,8 +606,8 @@ subroutine leewave_superbee(is_,ie_,js_,je_,nz_,flux,vel,var)
  integer :: k,i,j,kp2,km1
  integer, intent(in) :: is_,ie_,js_,je_,nz_
  real*8, intent(inout)  :: flux(is_:ie_,js_:je_,0:nz_)
- real*8, intent(inout)  :: var(is_:ie_,js_:je_,nz_)
- real*8, intent(inout)  :: vel(is_:ie_,js_:je_,nz_)
+ real*8, intent(in)  :: var(is_:ie_,js_:je_,nz_)
+ real*8, intent(in)  :: vel(is_:ie_,js_:je_,nz_)
  !real*8 :: flux(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,0:nz)
  !real*8 :: var(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
  !real*8 :: vel(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
