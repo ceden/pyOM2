@@ -11,7 +11,7 @@ ide = $(code)/idemix
 adv = $(code)/advection
 dia = $(code)/diagnostics
 rossmix = $(code)/rossmix
-qg = $(code)/qg_filter
+
 
 for_files = $(main)/main_module.f90  \
             $(ide)/idemix_module.f90 \
