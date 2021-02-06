@@ -69,11 +69,11 @@ class eady0(pyOM):
      M0    = sqrt(f0*U0/H0)    #    
      if M.my_pe == 0:
        print
-       print  ' L  = %f km'%(Lr/1e3)
-       print  ' Ro = %f '%Ro
-       print  ' Ri = %f '%Ri
-       print  ' delta = %f '%delta
-       print  ' ell = %f '%(Lr/6400e3)
+       print (' L  = %f km'%(Lr/1e3) )
+       print (' Ro = %f '%Ro )
+       print (' Ri = %f '%Ri )
+       print (' delta = %f '%delta )
+       print (' ell = %f '%(Lr/6400e3) )
 
      # solve linear stability problem first
      ksx=linspace(0,3.2,50);    kx=ksx/Lr
@@ -89,8 +89,8 @@ class eady0(pyOM):
      B=N0**2*zt
      om_max,om,kmax,lmax,u,v,w,b,p=lin_stab.pe(U,V,B,M.dzt[0],kx,ky,0.,beta,0.,f0,0.,0)
      if M.my_pe == 0:
-       print ' Max. growth rate %f 1/days ' % (-imag(om)*86400)
-       print ' k_max = %f Lr , l_max = %f Lr' % (kmax*Lr,lmax*Lr)
+       print(' Max. growth rate %f 1/days ' % (-imag(om)*86400) )
+       print(' k_max = %f Lr , l_max = %f Lr' % (kmax*Lr,lmax*Lr) )
        #print ' theoretical om_max = ',sqrt(5./54)/sqrt(1+Ri)*f0 *86400
        #L0 = 2*pi*sqrt(2./5.)*sqrt(1+Ri)*M0**2/f0**2*H0
        #print ' theoretical k_max = ',2*pi/L0 * Lr
@@ -104,9 +104,9 @@ class eady0(pyOM):
      M.dt_mom    = CFL/U0*M.dxt[0]   # CFL=U*dt/dx
      M.dt_tracer = CFL/U0*M.dxt[0]
      if M.my_pe == 0:
-       print " dx=%f km, dt= %f s "%(M.dxt[0]/1e3,M.dt_mom)
-       print " CFL  = ",U0*M.dt_mom/M.dxt[0]
-       print " CFL  = ",real(om)/kmax*M.dt_mom/M.dxt[0]
+       print(" dx=%f km, dt= %f s "%(M.dxt[0]/1e3,M.dt_mom))
+       print(" CFL  = ",U0*M.dt_mom/M.dxt[0] )
+       print(" CFL  = ",real(om)/kmax*M.dt_mom/M.dxt[0] )
      M.congr_epsilon = 1e-12 *(M.dxt[0]/20e3)**2
 
      #M.a_h      = Ek*f0*M.dxt[0]**2 
@@ -116,8 +116,8 @@ class eady0(pyOM):
      #M.k_h = Ek*f0*M.dxt[0]**2 
      #M.k_v = Ek*f0*M.dzt[0]**2 
      if M.my_pe == 0:
-       print " A_h = %f m^2/s  Ek = %f"%(M.a_h,Ek)
-       print " A_v = %f m^2/s  Ek = %f"%(M.kappam_0,Ek)
+       print(" A_h = %f m^2/s  Ek = %f"%(M.a_h,Ek) )
+       print(" A_v = %f m^2/s  Ek = %f"%(M.kappam_0,Ek) )
      return
 
 
@@ -141,7 +141,7 @@ class eady0(pyOM):
      u_rest = abs(imag(self.lin_stab_om))/5.
 
      if (M.n_pes_i >1): 
-         print 'Error: numbers of PES in i direction >1'
+         print('Error: numbers of PES in i direction >1')
          stop
      if M.enable_tempsalt_sources: 
          mm = mean( M.temp[2:-2,:,:,M.tau-1] , axis = 0 )

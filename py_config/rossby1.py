@@ -39,7 +39,7 @@ class rossby1(pyOM):
  
    def set_grid(self):
      M=self.fortran.main_module
-     print 'Rossby radius is ',RN/1e3,' km'
+     print ('Rossby radius is ',RN/1e3,' km')
      M.dxt[:] = RN/10.0
      M.dyt[:] = RN/10.0
      M.dzt[:] = CN**2/9.81 

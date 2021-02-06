@@ -151,8 +151,8 @@ class jets1(pyOM):
      M=self.fortran.main_module         # fortran module with model variables
      self.set_signal('user_defined') # following routine is called by all PEs
      self.user_defined_signal()
-     k=M.nz*3/4
-     i=int(M.nx/2)
+     k=M.nz*3//4
+     i=int(M.nx//2)
      self.figure.clf()
      
      ax=self.figure.add_subplot(221)

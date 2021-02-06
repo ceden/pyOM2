@@ -87,8 +87,8 @@ class kelv2(pyOM):
      
      k=linspace(0,1.0,50);   
      om_max,om,kmax,u,v,w,b,p=pe(self.U,self.B,dz,k,0,0)
-     print ' Max. growth rate %f 1/s ' % (-imag(om))
-     print ' k_max = %f ' % (kmax,)
+     print (' Max. growth rate %f 1/s ' % (-imag(om)))
+     print (' k_max = %f ' % (kmax,))
      self.kmax = kmax
      self.u_pert = 5e-2*real(u)
      self.w_pert = 5e-2*real(w)
@@ -105,7 +105,7 @@ class kelv2(pyOM):
      dx  =   L/M.nx 
      M.dt_tracer  = dx*0.02/0.25   # c = 0.25/0.05  dt =dx/c
      M.dt_mom     = dx*0.02/0.25
-     print "dx=%f m, dt= %f s "%(dx,M.dt_tracer)
+     print ("dx=%f m, dt= %f s "%(dx,M.dt_tracer))
      
      M.dxt[:]=dx
      M.dyt[:]=dx

@@ -79,7 +79,7 @@ class acc1(pyOM):
      L_x = 0.0
      if M.my_blk_i == M.n_pes_i: L_x = M.xu[-(1+M.onx)]
      self.fortran.global_max(L_x)
-     if M.my_pe==0: print ' domain size is ',L_x,' m x ',L_y,' m'
+     #if M.my_pe==0: print(' domain size is ',L_x,' m x ',L_y,' m')
      self.L_x = L_x; self.L_y = L_y    
      (X,Y)= meshgrid(M.xt,M.yt); X=X.transpose(); Y=Y.transpose()
      M.kbot[:]=1

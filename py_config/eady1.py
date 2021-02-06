@@ -79,7 +79,7 @@ class eady1(pyOM):
      M=self.fortran.main_module   
      U_0 = 0.5
      N_0 = 0.004
-     f=M.coriolis_t[M.ny/2]
+     f=M.coriolis_t[M.ny//2]
      h = (M.nz-2)*M.dzt[0]
      kx=1.6*f/(N_0*h)
      ky=pi/((M.ny-2)*M.dxt[0])

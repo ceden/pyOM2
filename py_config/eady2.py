@@ -57,18 +57,18 @@ class eady2(pyOM):
      delta = H0/Lr             # aspect ratio
      Ro    = U0/(f0*Lr)       # Rossby number
      Ri    = N0**2*H0**2/U0**2 # Richardson number
-     print
-     print  ' L  = %f km'%(Lr/1e3)
-     print  ' Ro = %f '%Ro
-     print  ' Ri = %f '%Ri
-     print  ' delta = %f '%delta
-     print  ' ell = %f '%(Lr/6400e3)
+     print()
+     print  (' L  = %f km'%(Lr/1e3))
+     print  (' Ro = %f '%Ro)
+     print  (' Ri = %f '%Ri)
+     print  (' delta = %f '%delta)
+     print  (' ell = %f '%(Lr/6400e3))
      print
      # solve linear stability problem first
      ksx=linspace(0,3.2,40);    kx=ksx/Lr
      ky = array( [0./Lr] )
      M.dzt[:]    = H0/M.nz
-     print  ' Delta z = ',M.dzt[0]
+     print  (' Delta z = ',M.dzt[0])
      zw=arange(M.nz)*M.dzt[0]+ M.dzt[0]
      zt=zw-M.dzt[0]/2.0
      U=U0/2+U0*zt/H0
@@ -76,12 +76,12 @@ class eady2(pyOM):
      B=N0**2*zt
      if 1:
       om_max,om,kmax,lmax,u,v,w,b,p=lin_stab.qg(U,V,B,M.dzt[0],kx,ky,beta,f0,0,HY)
-      print ' Max. growth rate QG %f 1/days ' % (-imag(om)*86400)
-      print ' k_max Lr = %f  , l_max L_r = %f ' % (kmax*Lr/pi,lmax*Lr/pi)
+      print (' Max. growth rate QG %f 1/days ' % (-imag(om)*86400))
+      print (' k_max Lr = %f  , l_max L_r = %f ' % (kmax*Lr/pi,lmax*Lr/pi))
      if 0:
       om_max,om,kmax,lmax,u,v,w,b,p=lin_stab.pe(U,V,B,M.dzt[0],kx,ky,0.,beta,0.,f0,0.,HY)
-      print ' Max. growth rate PE %f 1/days ' % (-imag(om)*86400)
-      print ' k_max = %f Lr , l_max = %f Lr' % (kmax*Lr,lmax*Lr)
+      print (' Max. growth rate PE %f 1/days ' % (-imag(om)*86400) )
+      print (' k_max = %f Lr , l_max = %f Lr' % (kmax*Lr,lmax*Lr) )
      print
      self.lin_stab_kmax = kmax
      self.lin_stab_b = b
@@ -94,7 +94,7 @@ class eady2(pyOM):
      M.dyt[:]  =   L/M.nx 
      M.dt_tracer  = M.dxt[0]*1200/20e3   # c = 20e3/1200.0,  dt =dx/c
      M.dt_mom     = M.dxt[0]*1200/20e3   # c = 20e3/1200.0,  dt =dx/c
-     print "dx=%f km, dt= %f s "%(M.dxt[0]/1e3,M.dt_tracer)
+     print ("dx=%f km, dt= %f s "%(M.dxt[0]/1e3,M.dt_tracer))
      #M.a_h = (M.dxt[0])**3*2e-11    
      return
 
@@ -184,10 +184,10 @@ class eady2(pyOM):
      """
      if hasattr(self,'figure'):
        M=self.fortran.main_module         # fortran module with model variables
-       k=M.nz*3/4
-       k2=M.nz/4
-       i=int(M.nx/2)
-       j=int(M.ny/2)
+       k=M.nz*3//4
+       k2=M.nz//4
+       i=int(M.nx//2)
+       j=int(M.ny//2)
        x=M.xt[2:-2]/1e3
        y=M.yt[2:-2]/1e3
        z=M.zt[:]

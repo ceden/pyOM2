@@ -73,11 +73,11 @@ class internal_wave1(pyOM):
 
      # wave maker
      for k in range(M.nz):
-        self.u0[:,:,k]= M.masku[:,:,k]*1./(100*60.*M.dt_tracer)*exp( -(M.zt[k]-M.zt[M.nz/2-1])**2/(M.dzt[0]*1)**2 )
+        self.u0[:,:,k]= M.masku[:,:,k]*1./(100*60.*M.dt_tracer)*exp( -(M.zt[k]-M.zt[M.nz//2-1])**2/(M.dzt[0]*1)**2 )
      # find x for nx/2
      x0  = zeros( (1,) , 'd', order='F')
-     if M.nx/2 >= M.is_pe and M.nx/2<= M.ie_pe:
-         x0 = M.xu[self.if2py(M.nx/2)]
+     if M.nx//2 >= M.is_pe and M.nx//2<= M.ie_pe:
+         x0 = M.xu[self.if2py(M.nx//2)]
      self.fortran.global_max(x0)
      for i in range( self.u0.shape[0]):
         self.u0[i,:,:]= self.u0[i,:,:]*exp( -(M.xu[i]-x0)**2/(M.dxu[0]*1)**2 )
@@ -141,9 +141,9 @@ class internal_wave1(pyOM):
        t = self.temp_gl[:,0,:]
        u = self.u_gl[:,0,:]
        w = self.w_gl[:,0,:]
-       t[M.nx/2-3*fac:M.nx/2+2*fac,M.nz/2-3*fac:M.nz/2+2*fac]=0
-       u[M.nx/2-3*fac:M.nx/2+2*fac,M.nz/2-3*fac:M.nz/2+2*fac]=0
-       w[M.nx/2-3*fac:M.nx/2+2*fac,M.nz/2-3*fac:M.nz/2+2*fac]=0
+       t[M.nx//2-3*fac:M.nx//2+2*fac,M.nz//2-3*fac:M.nz//2+2*fac]=0
+       u[M.nx//2-3*fac:M.nx//2+2*fac,M.nz//2-3*fac:M.nz//2+2*fac]=0
+       w[M.nx//2-3*fac:M.nx//2+2*fac,M.nz//2-3*fac:M.nz//2+2*fac]=0
        co=ax.contourf(self.xt_gl,M.zt,t.transpose() )
        self.figure.colorbar(co)
        ax.contour(self.xt_gl,M.zt,(t+self.t0_gl[:,0,:]).transpose(),10,colors='red')

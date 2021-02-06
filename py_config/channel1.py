@@ -63,12 +63,12 @@ class channel1(pyOM):
      Lr    = N0*H0/f0          # Rossby radius
      Ro    = U0/(f0*Lr)       # Rossby number
      Ri    = N0**2*H0**2/U0**2 # Richardson number
-     print
-     print  ' L  = %f km'%(Lr/1e3)
-     print  ' Ro = %f '%Ro
-     print  ' Ri = %f '%Ri
-     print  ' delta = %f '%delta
-     print  ' ell = %f '%(Lr/6400e3)
+     print ()
+     print  (' L  = %f km'%(Lr/1e3))
+     print  (' Ro = %f '%Ro)
+     print  (' Ri = %f '%Ri)
+     print  (' delta = %f '%delta)
+     print  (' ell = %f '%(Lr/6400e3))
 
      # solve linear stability problem first
      ksx=linspace(0,3.2,50);    kx=ksx/Lr
@@ -83,8 +83,8 @@ class channel1(pyOM):
      V=U*0
      B=N0**2*zt
      om_max,om,kmax,lmax,u,v,w,b,p=lin_stab.pe(U,V,B,M.dzt[0],kx,ky,0.,beta,0.,f0,0.,0)
-     print ' Max. growth rate %f 1/days ' % (-imag(om)*86400)
-     print ' k_max = %f Lr , l_max = %f Lr' % (kmax*Lr,lmax*Lr)
+     print (' Max. growth rate %f 1/days ' % (-imag(om)*86400) )
+     print (' k_max = %f Lr , l_max = %f Lr' % (kmax*Lr,lmax*Lr) )
 
      self.lin_stab_om = om
      self.lin_stab_kmax = kmax
@@ -94,9 +94,9 @@ class channel1(pyOM):
      M.dyt[:]  =   L/M.ny 
      M.dt_mom    = CFL/U0*M.dxt[0]   # CFL=U*dt/dx
      M.dt_tracer = CFL/U0*M.dxt[0]
-     print " dx=%f km, dt= %f s "%(M.dxt[0]/1e3,M.dt_mom)
-     print " CFL  = ",U0*M.dt_mom/M.dxt[0]
-     print " CFL  = ",real(om)/kmax*M.dt_mom/M.dxt[0]
+     print (" dx=%f km, dt= %f s "%(M.dxt[0]/1e3,M.dt_mom))
+     print (" CFL  = ",U0*M.dt_mom/M.dxt[0])
+     print (" CFL  = ",real(om)/kmax*M.dt_mom/M.dxt[0])
      M.congr_epsilon = 1e-12 *(M.dxt[0]/20e3)**2
 
      M.a_h      = Ek*f0*M.dxt[0]**2 
@@ -105,8 +105,8 @@ class channel1(pyOM):
      
      #M.k_h = Ek*f0*M.dxt[0]**2 
      #M.k_v = Ek*f0*M.dzt[0]**2 
-     print " A_h = %f m^2/s  Ek = %f"%(M.a_h,Ek)
-     print " A_v = %f m^2/s  Ek = %f"%(M.kappam_0,Ek)
+     print (" A_h = %f m^2/s  Ek = %f"%(M.a_h,Ek))
+     print (" A_v = %f m^2/s  Ek = %f"%(M.kappam_0,Ek))
      return
 
    def set_coriolis(self):

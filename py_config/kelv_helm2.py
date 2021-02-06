@@ -54,7 +54,7 @@ class kelv1(pyOM):
 
    def u_star_fct(self,k):
      M=self.fortran.main_module   
-     return 0.6+0.5*tanh( (M.zt[k-1]-M.zt[M.nz/2-1])/M.zt[0]*300)
+     return 0.6+0.5*tanh( (M.zt[k-1]-M.zt[M.nz//2-1])/M.zt[0]*300)
 
          
    def set_initial_conditions(self):

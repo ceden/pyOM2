@@ -2,7 +2,7 @@
 import sys; sys.path.append('../py_src')
 from pyOM_gui import pyOM_gui as pyOM
 from numpy import *
-import Tkinter
+import tkinter as Tkinter
 
 
 
@@ -62,9 +62,9 @@ class eq_waves1(pyOM):
      y0=M.ny*M.dxt[0]*0.5
      A=0.01
      print
-     print 'h_n = ',M.dzt[0],' m'
-     print 'R_e = ',Re.get()/1e3,' km'
-     print "T_e = 1/sqrt(beta c) = " , 1/(BETA.get()*cn)**0.5 /86400. , ' days'
+     print('h_n = ',M.dzt[0],' m')
+     print('R_e = ',Re.get()/1e3,' km')
+     print("T_e = 1/sqrt(beta c) = " , 1/(BETA.get()*cn)**0.5 /86400. , ' days')
      
      if Kelvin.get():# Kelvin wave
        kx=KX.get()*pi/( M.nx*M.dxt[0] )

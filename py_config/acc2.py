@@ -212,7 +212,7 @@ class acc2(pyOM):
        self.figure.clf()
        ax=self.figure.add_subplot(221)
        
-       co=ax.contourf(self.yt_gl,M.zt,self.temp_gl[M.nx/2-1,:,:].transpose())
+       co=ax.contourf(self.yt_gl,M.zt,self.temp_gl[M.nx//2-1,:,:].transpose())
        self.figure.colorbar(co)
        ax.set_title('temperature')
        ax.set_ylabel('z [m]')
@@ -220,7 +220,7 @@ class acc2(pyOM):
 
        ax=self.figure.add_subplot(223)
        try:
-        co=ax.contourf(self.yt_gl,M.zw,log10(self.kappa_gl[M.nx/2-1,:,:].transpose()) )
+        co=ax.contourf(self.yt_gl,M.zw,log10(self.kappa_gl[M.nx//2-1,:,:].transpose()) )
        except:
         pass
        self.figure.colorbar(co)

@@ -87,9 +87,9 @@ class enso1(pyOM):
      Re = (cn /BETA)**0.5  
      y0=M.ny*M.dxt[0]*0.5
      g=9.81
-     print "Eq. Rossby radius = ",Re/1e3," km"
-     print "c_n = ",cn," m/s"
-     print "h_n = ",hn," m" 
+     print("Eq. Rossby radius = ",Re/1e3," km")
+     print("c_n = ",cn," m/s")
+     print("h_n = ",hn," m" )
      
      #for i in range(M.xt.shape[0]):
      #  for j in range(M.yt.shape[0]):
