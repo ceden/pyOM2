@@ -402,14 +402,18 @@ class pyOM_gui(Tkinter.Frame,pyOM_ave):
       self.entry.icursor(Tkinter.END)
       
    def command_process(self, args):
-      import sys,StringIO
+      import sys
+      try:
+        from StringIO import StringIO ## for Python 2
+      except ImportError:
+        from io import StringIO ## for Python 3  
       self.sendToDisplay('>>'+self.command.get()+"\n")
       if self.command.get() != '':
          self.commandlist.append(self.command.get() )
          self.command_pointer = len(self.commandlist )
       b1=sys.stderr; b2=sys.stdout
-      sys.stderr = StringIO.StringIO()
-      sys.stdout = StringIO.StringIO()
+      sys.stderr = StringIO()
+      sys.stdout = StringIO()
       c= code.InteractiveInterpreter(self.command_locals)
       c.runsource(self.command.get() )
       self.sendToDisplay(sys.stderr.getvalue())
