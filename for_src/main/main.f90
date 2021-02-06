@@ -131,12 +131,12 @@ program main
         if (enable_idemix_M2) then
            call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,E_M2(:,:,:,taup1)) 
            call setcyclic_xyp   (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,E_M2(:,:,:,taup1))
-           call set_obc_boundary_xyz(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,E_M2(:,:,:,taup1)) 
+           call set_obc_boundary_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,E_M2(:,:,:,taup1)) 
         endif
         if (enable_idemix_niw) then
            call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,E_niw(:,:,:,taup1)) 
            call setcyclic_xyp   (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,E_niw(:,:,:,taup1))
-           call set_obc_boundary_xyz(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,E_niw(:,:,:,taup1)) 
+           call set_obc_boundary_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,E_niw(:,:,:,taup1)) 
         endif
  
         ! diagnose vertical velocity at taup1
