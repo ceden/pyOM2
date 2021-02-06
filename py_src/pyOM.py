@@ -30,6 +30,7 @@ class pyOM:
         except:
           print ('WARNNG: cannot load module pyOM_code_MPI')  
           print (' parallel pyOM version inactive ')
+          raise ImportError
         self.fortran = pyOM_code_MPI
         #print(' checking MPI')
         self.mpi_comm = MPI.COMM_WORLD  
