@@ -12,8 +12,8 @@ F90FLAGS =  -llapack -lblas -fconvert=big-endian -O3 -Wall\
 CDFFLAGS = -I/usr/local/include -L/usr/local/lib  -lnetcdff -lnetcdf -lnetcdf 
 MPIFLAGS = 
 
-F2PYFLAGS = -llapack -lblas
-F2PY_MPIFLAGS = -I/usr/include/mpi -lmpi -lmpi_f77 
+F2PYFLAGS =  -llapack -lblas
+F2PY_MPIFLAGS = 
 
 
 
