@@ -50,7 +50,6 @@ subroutine set_parameter
  use main_module
  use config_module
  use diagnostics_module
- use qg_module !!!!! new !!!!
  implicit none
 
  nx=H_RES; ny=H_RES; nz = V_RES
@@ -73,14 +72,7 @@ subroutine set_parameter
  eq_of_state_type       =  1
  enable_tempsalt_sources = .true.
  enable_momentum_sources = .true.
- !!! new !!!
- enable_diag_qg_filter = .true.
- enable_qg_initialize = .false.
- enable_qg_diag_Nsqr = .false.
- enable_qg_diag_ageo = .true.
- qg_Nsqr = N0**2
- qg_f0 = f0
- !!!!!!!!!!!
+
 end subroutine set_parameter
 
 
@@ -88,7 +80,6 @@ subroutine set_grid
  use main_module   
  use config_module   
  use diagnostics_module
- use qg_module
  implicit none
 
  Lx = 2*2*pi/kmax   
@@ -126,9 +117,6 @@ subroutine set_grid
  enable_diag_ts_monitor = .true.; ts_monint = dt_mom!86400*0.25
  enable_diag_snapshots  = .true.; snapint   = 86400!dt_mom*0.25
 
- qg_snap_int = snapint
- qg_congr_epsilon = .001
- qg_congr_max_itts = 5000
 
 end subroutine set_grid
 
