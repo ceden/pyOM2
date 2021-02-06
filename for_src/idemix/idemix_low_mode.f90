@@ -14,6 +14,14 @@ subroutine integrate_idemix_M2
  real*8 :: advp_ft(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,np) 
  call adv_flux_superbee_spectral(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn,advp_ft,E_M2,u_M2,v_M2,w_M2)
  call reflect_flux(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn)
+ 
+ call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn) !FP 2020
+ call setcyclic_xyp (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn) ! that should not be necessary
+ call set_obc_boundary_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn)
+ call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
+ call setcyclic_xyp (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
+ call set_obc_boundary_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
+ 
  do k=2,np-1
   do j=js_pe,je_pe
    do i=is_pe,ie_pe
@@ -50,6 +58,14 @@ subroutine integrate_idemix_niw
 
  call adv_flux_superbee_spectral(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn,advp_ft,E_niw,u_niw,v_niw,w_niw)
  call reflect_flux(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn)
+ 
+ call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn)   !FP 2020 
+ call setcyclic_xyp (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn)
+ call set_obc_boundary_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn)
+ call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
+ call setcyclic_xyp (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
+ call set_obc_boundary_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
+ 
  do k=2,np-1
   do j=js_pe,je_pe
    do i=is_pe,ie_pe
@@ -120,8 +136,12 @@ subroutine wave_interaction
    do k=2,np-1
     do j=js_pe-onx,je_pe+onx
      do i=is_pe-onx,ie_pe+onx
-      fmin = min(0.5d0/dt_tracer,alpha_M2_cont(i,j)*cont(i,j) ) ! flux limiter
-      M2_psi_diss(i,j,k) = fmin*E_M2(i,j,k,tau)*maskTp(i,j,k)
+      !fmin = min(0.5d0/dt_tracer,alpha_M2_cont(i,j)*cont(i,j) ) ! flux limiter
+      !M2_psi_diss(i,j,k) = fmin*E_M2(i,j,k,tau)*maskTp(i,j,k)
+      alpha_M2_cont(i,j) = max(0d0,min(alpha_M2_cont(i,j),1./max(1d-12,dt_tracer*cont(i,j)))) ! FP 2020
+      alpha_M2_cont(i,j) = max(0d0,min(alpha_M2_cont(i,j),1./max(1d-12,dt_tracer*E_M2_int(i,j))))
+      M2_psi_diss(i,j,k) = alpha_M2_cont(i,j)*cont(i,j)*E_M2(i,j,k,tau)*maskTp(i,j,k)
+      
       E_M2(i,j,k,taup1)= E_M2(i,j,k,taup1)-dt_tracer*M2_psi_diss(i,j,k) 
      enddo
     enddo
