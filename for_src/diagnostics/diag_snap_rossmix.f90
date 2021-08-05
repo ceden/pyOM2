@@ -31,18 +31,18 @@ subroutine init_snap_cdf_rossmix
       p_tdim  = ncddef(ncid, 'phit', nphi , iret)
       p_udim  = ncddef(ncid, 'phiu', nphi , iret)
 !     grid variables
-      p_tid  = ncvdef (ncid,'phit',NCFLOAT,1,p_tdim,iret)
+      p_tid  = ncvdef (ncid,'phit',NCFLOAT,1,(/p_tdim/),iret)
       name = 'wave angle t grid'; unit = ' '
       call ncaptc(ncid, p_tid, 'long_name', NCCHAR, 24, name, iret) 
       call ncaptc(ncid, p_tid, 'units',     NCCHAR, 16, unit, iret) 
-      p_uid  = ncvdef (ncid,'phiu',NCFLOAT,1,p_udim,iret)
+      p_uid  = ncvdef (ncid,'phiu',NCFLOAT,1,(/p_udim/),iret)
       name = 'wave angle u grid'; unit = ' '
       call ncaptc(ncid, p_uid, 'long_name', NCCHAR, 24, name, iret) 
       call ncaptc(ncid, p_uid, 'units',     NCCHAR, 16, unit, iret) 
 !     attributes of the grid
       call ncendf(ncid, iret)
-      iret= nf_put_vara_double(ncid,p_Tid,1,nphi ,phit)
-      iret= nf_put_vara_double(ncid,p_uid,1,nphi ,phiu)
+      iret= nf_put_vara_double(ncid,p_Tid,(/1/),(/nphi/) ,phit)
+      iret= nf_put_vara_double(ncid,p_uid,(/1/),(/nphi/) ,phiu)
       call ncclos (ncid, iret)
   endif
 
@@ -269,7 +269,7 @@ subroutine diag_snap_rossmix
    ilen=ilen+1
    fxa = itt*dt_tracer/86400.0
    iret=nf_inq_varid(ncid,'Time',itimeid)
-   iret= nf_put_vara_double(ncid,itimeid,ilen,1,fxa)
+   iret= nf_put_vara_double(ncid,itimeid,(/ilen/),(/1/),(/fxa/))
    call ncclos (ncid, iret)
  endif
  call fortran_barrier

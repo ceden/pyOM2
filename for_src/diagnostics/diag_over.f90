@@ -83,21 +83,21 @@ subroutine init_diag_overturning
     iret = nf_create (over_file, nf_clobber, ncid)
     iret=nf_set_fill(ncid, NF_NOFILL, iret)
     iTimedim  = ncddef(ncid, 'Time', nf_unlimited, iret)
-    itimeid  = ncvdef (ncid,'Time', NCFLOAT,1,itimedim,iret)
+    itimeid  = ncvdef (ncid,'Time', NCFLOAT,1,(/itimedim/),iret)
     name = 'Time '; unit = 'days'
     call ncaptc(ncid, itimeid, 'long_name', NCCHAR, len_trim(name), name, iret) 
     call ncaptc(ncid, itimeid, 'units',   NCCHAR, len_trim(unit), unit, iret) 
     call ncaptc(ncid, iTimeid,'time_origin',NCCHAR, 20,'01-JAN-1900 00:00:00', iret)
     sig_dim = ncddef(ncid, 'sigma', nlevel , iret)
-    sig_id  = ncvdef (ncid,'sigma',NCFLOAT,1,sig_dim,iret)
+    sig_id  = ncvdef (ncid,'sigma',NCFLOAT,1,(/sig_dim/),iret)
     name = 'Sigma axis'; unit = 'kg/m^3'
     call ncaptc(ncid, sig_id, 'long_name', NCCHAR, len_trim(name), name, iret) 
     call ncaptc(ncid, sig_id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
 
     z_tdim    = ncddef(ncid, 'zt',  nz, iret)
     z_udim    = ncddef(ncid, 'zu',  nz, iret)
-    z_tid  = ncvdef (ncid,'zt', NCFLOAT,1,z_tdim,iret)
-    z_uid  = ncvdef (ncid,'zu', NCFLOAT,1,z_udim,iret)
+    z_tid  = ncvdef (ncid,'zt', NCFLOAT,1,(/z_tdim/),iret)
+    z_uid  = ncvdef (ncid,'zu', NCFLOAT,1,(/z_udim/),iret)
     name = 'Height on T grid     '; unit = 'm'
     call ncaptc(ncid, z_tid, 'long_name', NCCHAR, len_trim(name), name, iret) 
     call ncaptc(ncid, z_tid, 'units',     NCCHAR, len_trim(unit), unit, iret) 
@@ -107,9 +107,9 @@ subroutine init_diag_overturning
 
 
     Lat_udim  = ncddef(ncid,'yu', ny , iret)
-    Lat_uid  = ncvdef (ncid,'yu',NCFLOAT,1,lat_udim,iret)
+    Lat_uid  = ncvdef (ncid,'yu',NCFLOAT,1,(/lat_udim/),iret)
     Lat_tdim  = ncddef(ncid,'yt', ny , iret)
-    Lat_tid  = ncvdef (ncid,'yt',NCFLOAT,1,lat_udim,iret)
+    Lat_tid  = ncvdef (ncid,'yt',NCFLOAT,1,(/lat_udim/),iret)
     if (coord_degree) then
        name = 'Latitude on T grid     '; unit = 'degrees N'
        call ncaptc(ncid, Lat_tid, 'long_name', NCCHAR, len_trim(name), name, iret) 
@@ -166,9 +166,9 @@ subroutine init_diag_overturning
 
 
     call ncendf(ncid, iret)
-    iret= nf_put_vara_double(ncid,z_tid,1,nz,zt)
-    iret= nf_put_vara_double(ncid,z_uid,1,nz,zw)
-    iret= nf_put_vara_double(ncid,sig_id,1,nlevel,sig)
+    iret= nf_put_vara_double(ncid,z_tid,(/1/),(/nz/),zt)
+    iret= nf_put_vara_double(ncid,z_uid,(/1/),(/nz/),zw)
+    iret= nf_put_vara_double(ncid,sig_id,(/1/),(/nlevel/),sig)
     iret=nf_close(ncid)
  endif
 
@@ -180,11 +180,11 @@ subroutine init_diag_overturning
      iret=nf_inq_varid(ncid,'yt',lat_tid)
      iret=nf_inq_varid(ncid,'yu',lat_uid)
      if (coord_degree) then
-       iret= nf_put_vara_double(ncid,lat_Tid,js_pe,je_pe-js_pe+1 ,yt(js_pe:je_pe))
-       iret= nf_put_vara_double(ncid,lat_uid,js_pe,je_pe-js_pe+1 ,yu(js_pe:je_pe))
+       iret= nf_put_vara_double(ncid,lat_Tid,(/js_pe/),(/je_pe-js_pe+1/) ,yt(js_pe:je_pe))
+       iret= nf_put_vara_double(ncid,lat_uid,(/js_pe/),(/je_pe-js_pe+1/) ,yu(js_pe:je_pe))
      else
-       iret= nf_put_vara_double(ncid,lat_Tid,js_pe,je_pe-js_pe+1 ,yt(js_pe:je_pe)/1e3)
-       iret= nf_put_vara_double(ncid,lat_uid,js_pe,je_pe-js_pe+1 ,yu(js_pe:je_pe)/1e3)
+       iret= nf_put_vara_double(ncid,lat_Tid,(/js_pe/),(/je_pe-js_pe+1/) ,yt(js_pe:je_pe)/1e3)
+       iret= nf_put_vara_double(ncid,lat_uid,(/js_pe/),(/je_pe-js_pe+1/) ,yu(js_pe:je_pe)/1e3)
      endif
      iret=nf_close(ncid)
    endif
@@ -353,7 +353,7 @@ subroutine write_overturning
    ilen=ilen+1
    fxa = itt*dt_tracer/86400.0
    iret=nf_inq_varid(ncid,'Time',itimeid)
-   iret= nf_put_vara_double(ncid,itimeid,ilen,1,fxa)
+   iret= nf_put_vara_double(ncid,itimeid,(/ilen/),(/1/),(/fxa/))
    iret=nf_close(ncid)
  endif
 

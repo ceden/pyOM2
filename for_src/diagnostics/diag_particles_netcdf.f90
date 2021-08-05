@@ -21,7 +21,7 @@ subroutine init_write_particles
    iret=nf_set_fill(ncid, NF_NOFILL, iret)
    tdim = ncddef(ncid, 'Time', nf_unlimited, iret)
    pdim = ncddef(ncid, 'Number', max(1,nptraj) , iret)
-   tid  = ncvdef (ncid,'Time', NCFLOAT,1,tdim,iret)
+   tid  = ncvdef (ncid,'Time', NCFLOAT,1,(/tdim/),iret)
    xid  = ncvdef (ncid,'x_pos', NCFLOAT,2,(/pdim,tdim/),iret)
    yid  = ncvdef (ncid,'y_pos', NCFLOAT,2,(/pdim,tdim/),iret)
    zid  = ncvdef (ncid,'z_pos', NCFLOAT,2,(/pdim,tdim/),iret)
@@ -108,21 +108,21 @@ subroutine write_particles
   iret=nf_inq_varid(ncid,'Time',tid)
   ilen=ilen+1
   fxa = itt*dt_tracer/86400.0
-  iret= nf_put_vara_double(ncid,tid,ilen,1,fxa)
+  iret= nf_put_vara_double(ncid,tid,(/ilen/),(/1/),(/fxa/))
   do n=1,nptraj
    if (coord_degree) then
-      iret= nf_put_vara_double(ncid,xid,(/n,ilen/),(/1,1/),pxyz(1,n))
-      iret= nf_put_vara_double(ncid,yid,(/n,ilen/),(/1,1/),pxyz(2,n))
+      iret= nf_put_vara_double(ncid,xid,(/n,ilen/),(/1,1/),(/pxyz(1,n)/))
+      iret= nf_put_vara_double(ncid,yid,(/n,ilen/),(/1,1/),(/pxyz(2,n)/))
    else
-      iret= nf_put_vara_double(ncid,xid,(/n,ilen/),(/1,1/),pxyz(1,n)/1e3)
-      iret= nf_put_vara_double(ncid,yid,(/n,ilen/),(/1,1/),pxyz(2,n)/1e3)
+      iret= nf_put_vara_double(ncid,xid,(/n,ilen/),(/1,1/),(/pxyz(1,n)/1e3/))
+      iret= nf_put_vara_double(ncid,yid,(/n,ilen/),(/1,1/),(/pxyz(2,n)/1e3/))
    endif
-   iret= nf_put_vara_double(ncid,zid,(/n,ilen/),(/1,1/),pxyz(3,n))
-   iret= nf_put_vara_double(ncid,uid,(/n,ilen/),(/1,1/),puvw(1,n))
-   iret= nf_put_vara_double(ncid,vid,(/n,ilen/),(/1,1/),puvw(2,n))
-   iret= nf_put_vara_double(ncid,wid,(/n,ilen/),(/1,1/),puvw(3,n))
-   iret= nf_put_vara_double(ncid,teid,(/n,ilen/),(/1,1/),pts(1,n))
-   iret= nf_put_vara_double(ncid,sid,(/n,ilen/),(/1,1/),pts(2,n))
+   iret= nf_put_vara_double(ncid,zid,(/n,ilen/),(/1,1/),(/pxyz(3,n)/))
+   iret= nf_put_vara_double(ncid,uid,(/n,ilen/),(/1,1/),(/puvw(1,n)/))
+   iret= nf_put_vara_double(ncid,vid,(/n,ilen/),(/1,1/),(/puvw(2,n)/))
+   iret= nf_put_vara_double(ncid,wid,(/n,ilen/),(/1,1/),(/puvw(3,n)/))
+   iret= nf_put_vara_double(ncid,teid,(/n,ilen/),(/1,1/),(/pts(1,n)/))
+   iret= nf_put_vara_double(ncid,sid,(/n,ilen/),(/1,1/),(/pts(2,n)/))
   enddo
   call ncclos (ncid, iret)
  endif

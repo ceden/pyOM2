@@ -134,7 +134,7 @@ subroutine diag_snap_energy
    ilen=ilen+1
    fxa = itt*dt_tracer/86400.0
    iret=nf_inq_varid(ncid,'Time',itimeid)
-   iret= nf_put_vara_double(ncid,itimeid,ilen,1,fxa)
+   iret= nf_put_vara_double(ncid,itimeid,(/ilen/),(/1/),(/fxa/))
    call ncclos (ncid, iret)
  endif
  call fortran_barrier

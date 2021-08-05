@@ -209,7 +209,7 @@ subroutine diag_variance_write_cdf
     iret=nf_inq_varid(ncid,'Time',timeid)
     ilen=ilen+1
     time = itt*dt_tracer/86400 
-    iret= nf_put_vara_double(ncid,timeid,ilen,1,time)
+    iret= nf_put_vara_double(ncid,timeid,(/ilen/),(/1/),(/time/))
  endif ! my_pe ==0
 
  do k=1,nz 

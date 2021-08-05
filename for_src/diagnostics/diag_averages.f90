@@ -160,7 +160,7 @@ subroutine write_averages
     ilen=ilen+1
     fxa = itt*dt_tracer/86400.0
     iret=nf_inq_varid(ncid,'Time',itimeid)
-    iret= nf_put_vara_double(ncid,itimeid,ilen,1,fxa)
+    iret= nf_put_vara_double(ncid,itimeid,(/ilen/),(/1/),(/fxa/))
  endif
  do n=1,number_diags
    if (diag_is3D(n)) then

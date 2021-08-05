@@ -182,7 +182,7 @@ subroutine diag_snap
      print'(a,f12.2,a,i4)',' writing snapshot at ',fxa,' d, time steps in file : ',ilen
    endif
    iret=nf_inq_varid(ncid,'Time',itimeid)
-   iret= nf_put_vara_double(ncid,itimeid,ilen,1,fxa)
+   iret= nf_put_vara_double(ncid,itimeid,(/ilen/),(/1/),(/fxa/))
    call ncclos (ncid, iret)
  endif
  call fortran_barrier
@@ -355,11 +355,11 @@ subroutine def_grid_cdf(filename)
       Lat_udim  = ncddef(ncid, 'yu', ny , iret)
       iTimedim  = ncddef(ncid, 'Time', nf_unlimited, iret)
 !     grid variables
-      Lon_tid  = ncvdef (ncid,'xt',NCFLOAT,1,lon_tdim,iret)
-      Lon_uid  = ncvdef (ncid,'xu',NCFLOAT,1,lon_udim,iret)
-      Lat_tid  = ncvdef (ncid,'yt',NCFLOAT,1,lat_tdim,iret)
-      Lat_uid  = ncvdef (ncid,'yu',NCFLOAT,1,lat_udim,iret)
-      itimeid  = ncvdef (ncid,'Time', NCFLOAT,1,itimedim,iret)
+      Lon_tid  = ncvdef (ncid,'xt',NCFLOAT,1,(/lon_tdim/),iret)
+      Lon_uid  = ncvdef (ncid,'xu',NCFLOAT,1,(/lon_udim/),iret)
+      Lat_tid  = ncvdef (ncid,'yt',NCFLOAT,1,(/lat_tdim/),iret)
+      Lat_uid  = ncvdef (ncid,'yu',NCFLOAT,1,(/lat_udim/),iret)
+      itimeid  = ncvdef (ncid,'Time', NCFLOAT,1,(/itimedim/),iret)
 !     attributes of the grid
       if (coord_degree) then
        name = 'Longitude on T grid     '; unit = 'degrees E'
@@ -396,8 +396,8 @@ subroutine def_grid_cdf(filename)
 
       z_tdim    = ncddef(ncid, 'zt',  nz, iret)
       z_udim    = ncddef(ncid, 'zu',  nz, iret)
-      z_tid  = ncvdef (ncid,'zt', NCFLOAT,1,z_tdim,iret)
-      z_uid  = ncvdef (ncid,'zu', NCFLOAT,1,z_udim,iret)
+      z_tid  = ncvdef (ncid,'zt', NCFLOAT,1,(/z_tdim/),iret)
+      z_uid  = ncvdef (ncid,'zu', NCFLOAT,1,(/z_udim/),iret)
       name = 'Height on T grid     '; unit = 'm'
       call ncaptc(ncid, z_tid, 'long_name', NCCHAR, 24, name, iret) 
       call ncaptc(ncid, z_tid, 'units',     NCCHAR, 16, unit, iret) 
@@ -406,8 +406,8 @@ subroutine def_grid_cdf(filename)
       call ncaptc(ncid, z_uid, 'units',     NCCHAR, 16, unit, iret) 
 
       call ncendf(ncid, iret)
-      iret= nf_put_vara_double(ncid,z_tid,1,nz ,zt)
-      iret= nf_put_vara_double(ncid,z_uid,1,nz ,zw)
+      iret= nf_put_vara_double(ncid,z_tid,(/1/),(/nz/) ,zt)
+      iret= nf_put_vara_double(ncid,z_uid,(/1/),(/nz/) ,zw)
       call ncclos (ncid, iret)
  endif
 
@@ -421,15 +421,15 @@ subroutine def_grid_cdf(filename)
       iret=nf_inq_varid(ncid,'yt',lat_tid)
       iret=nf_inq_varid(ncid,'yu',lat_uid)
       if (coord_degree) then
-       iret= nf_put_vara_double(ncid,lon_Tid,is_pe,ie_pe-is_pe+1 ,xt(is_pe:ie_pe))
-       iret= nf_put_vara_double(ncid,lon_uid,is_pe,ie_pe-is_pe+1 ,xu(is_pe:ie_pe))
-       iret= nf_put_vara_double(ncid,lat_Tid,js_pe,je_pe-js_pe+1 ,yt(js_pe:je_pe))
-       iret= nf_put_vara_double(ncid,lat_uid,js_pe,je_pe-js_pe+1 ,yu(js_pe:je_pe))
+       iret= nf_put_vara_double(ncid,lon_Tid,(/is_pe/),(/ie_pe-is_pe+1/) ,xt(is_pe:ie_pe))
+       iret= nf_put_vara_double(ncid,lon_uid,(/is_pe/),(/ie_pe-is_pe+1/) ,xu(is_pe:ie_pe))
+       iret= nf_put_vara_double(ncid,lat_Tid,(/js_pe/),(/je_pe-js_pe+1/) ,yt(js_pe:je_pe))
+       iret= nf_put_vara_double(ncid,lat_uid,(/js_pe/),(/je_pe-js_pe+1/) ,yu(js_pe:je_pe))
       else
-       iret= nf_put_vara_double(ncid,lon_Tid,is_pe,ie_pe-is_pe+1 ,xt(is_pe:ie_pe)/1e3)
-       iret= nf_put_vara_double(ncid,lon_uid,is_pe,ie_pe-is_pe+1 ,xu(is_pe:ie_pe)/1e3)
-       iret= nf_put_vara_double(ncid,lat_Tid,js_pe,je_pe-js_pe+1 ,yt(js_pe:je_pe)/1e3)
-       iret= nf_put_vara_double(ncid,lat_uid,js_pe,je_pe-js_pe+1 ,yu(js_pe:je_pe)/1e3)
+       iret= nf_put_vara_double(ncid,lon_Tid,(/is_pe/),(/ie_pe-is_pe+1/) ,xt(is_pe:ie_pe)/1e3)
+       iret= nf_put_vara_double(ncid,lon_uid,(/is_pe/),(/ie_pe-is_pe+1/) ,xu(is_pe:ie_pe)/1e3)
+       iret= nf_put_vara_double(ncid,lat_Tid,(/js_pe/),(/je_pe-js_pe+1/) ,yt(js_pe:je_pe)/1e3)
+       iret= nf_put_vara_double(ncid,lat_uid,(/js_pe/),(/je_pe-js_pe+1/) ,yu(js_pe:je_pe)/1e3)
       endif
       call ncclos (ncid, iret)
    endif
