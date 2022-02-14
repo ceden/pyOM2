@@ -198,7 +198,7 @@ subroutine diag_cfl
  use idemix_module   
  use diagnostics_module   
  implicit none
- integer :: i,j,k
+ integer :: i,j,k,ii,jj,kk
  real*8 :: cfl,wcfl
 
  cfl = 0d0; wcfl=0d0
@@ -212,12 +212,33 @@ subroutine diag_cfl
   enddo
  enddo
  call global_max(cfl); call global_max(wcfl)
- if (cfl > 1.0.or.wcfl > 1.0) then
-   if (my_pe==0) print'(/a,f12.6)','ERROR:  maximal CFL number = ',max(cfl,wcfl)
+ 
+ if  ((     enable_hydrostatic .and. (cfl > 1.0) ) .or. &
+      (.not.enable_hydrostatic .and. (cfl > 1.0 .or. wcfl > 1.0) )) then
+   if (my_pe==0) print'(/a)','ERROR:  CFL number violation'
+   if (my_pe==0) print'(a,f12.6)','max. horizontal CFL number = ',cfl
+   if (my_pe==0) print'(a,f12.6)','max. vertical CFL number   = ',wcfl
+   ii=-1;jj=-1;kk=-1
+   do k=1,nz
+    do j=js_pe,je_pe
+     do i=is_pe,ie_pe
+      if (cfl <= abs(u(i,j,k,tau))*maskU(i,j,k)/(cost(j)*dxt(i))*dt_tracer  .or. &
+          cfl <=  abs(v(i,j,k,tau))*maskV(i,j,k)/dyt(j)*dt_tracer     .or. &
+          (wcfl <= abs(w(i,j,k,tau))*maskW(i,j,k)/dzt(k)*dt_tracer .and. .not.enable_hydrostatic)  ) then
+        ii=i;jj=j;kk=k
+      endif
+     enddo
+    enddo
+   enddo 
+   call global_max_int(ii)
+   call global_max_int(jj)
+   call global_max_int(kk)
+   if (my_pe==0) print'(a,i5,a,i5,a,i5)', 'max CFL number at i=',ii,' j=',jj,' k=',kk
    if (my_pe==0) print'(a,i9,a/)' ,' at itt = ',itt,' ... stopping integration '
    call panic_snap
    call halt_stop(' in diag_cfl')
  endif
+ 
  ! check for NaN
  if (cfl/=cfl .or. wcfl /=wcfl) then
    if (my_pe==0) print'(/a)','ERROR:   CFL number is NaN '
@@ -225,6 +246,7 @@ subroutine diag_cfl
    call panic_snap
    call halt_stop(' in diag_cfl')
  endif
+ 
  if (my_pe==0) print'(a,f12.6,f12.6)', ' maximal hor./ver CFL number =',cfl,wcfl
 
  !if (enable_eke .or. enable_tke .or. enable_idemix) then
