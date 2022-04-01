@@ -1,0 +1,20 @@
+
+# need to load modules:
+# module purge
+#module load intel-oneapi-compilers
+#module load intel-oneapi-mkl
+#module load openmpi
+#module load netcdf-c
+#module load netcdf-fortran
+
+# fortran front end
+F90 = mpifort
+CDFFLAGS = -I`nf-config --includedir`  `nf-config --flibs`  
+MPIFLAGS =  
+F90FLAGS =  -Wl,-rpath,`nf-config --prefix `/lib -qmkl -Wl,-rpath,${MKLROOT}/lib/intel64 -convert big_endian 
+
+
+
+
+
+
