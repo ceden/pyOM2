@@ -1,4 +1,4 @@
-! convert a restart in different unformated files written
+! converts a restart in different unformated files written
 ! by each PE to files of a different domain decomposition
 ! needs at least three 3D fields memory
 ! reads from restart_PE_?????.dta and writes to new_restart_PE_?????.dta
@@ -8,7 +8,7 @@ program convert_restart
  integer :: onx =2,err
  integer :: nx,ny,nz,itt
  integer :: is,ie,js,je,n_pes_i,n_pes_j
- integer :: npes,n,k,io=10,of=20
+ integer :: npes,n,k,io=10
  real*8,allocatable :: a(:,:,:,:)
  character*80 :: filename,arg
  logical :: enable_streamfunction = .false.
@@ -49,6 +49,7 @@ program convert_restart
 10 continue
  npes = n-1
  print*,' found ',npes+1,' files'
+
 
  ! initialize the output files
  call init_output(itt,nx,ny,nz,onx,n_pes_i,n_pes_j)
@@ -107,6 +108,8 @@ program convert_restart
          print *,' not yet implemented'
          stop
  endif
+
+
  n=16
  if (enable_eke) then
    print*,'reading/writing eke'
@@ -116,7 +119,8 @@ program convert_restart
    call read_chunk(n+1,npes,a,nx,ny,nz,onx,.False.,.False.)
    call write_chunk(a,nx,ny,nz,onx,n_pes_i,n_pes_j,.False.,.False.)
    n=n+2
- endif        
+ endif  
+ 
  if (enable_tke) then
    print*,'reading/writing tke'
    call read_chunk(n,npes,a,nx,ny,nz,onx,.False.,.True.)
@@ -128,7 +132,7 @@ program convert_restart
  endif
 
  if (enable_idemix) then
-  print*,'reading/writing E_iw'
+   print*,'reading/writing E_iw'
    call read_chunk(n,npes,a,nx,ny,nz,onx,.False.,.False.)
    call write_chunk(a,nx,ny,nz,onx,n_pes_i,n_pes_j,.False.,.False.)
    print*,'reading/writing dE_iw'
@@ -147,7 +151,7 @@ subroutine init_output(itt,nx,ny,nz,onx,n_pes_i,n_pes_j)
  integer :: itt,nx,ny,nz,onx,n_pes_i,n_pes_j
  integer :: my_pe,i_blk,j_blk,is_pe,ie_pe,js_pe,je_pe
  integer :: is,ie,js,je,my_blk_i,my_blk_j
- integer :: io=30
+ integer :: io=10
  character*80 :: filename
 
  do my_pe = 0,n_pes_i*n_pes_j-1
@@ -174,31 +178,48 @@ end subroutine
 subroutine read_chunk(k,npes,a,nx,ny,nz,onx,is2D,is3arr)
  implicit none
  logical :: is2D,is3arr
- integer :: kk,k,npes,is,ie,js,je
- integer :: nx,ny,nz,onx,n,io
+ integer :: kk,k,npes,is,ie,js,je,i
+ integer :: nx,ny,nz,onx,n,io=10
  real*8 :: a(1-onx:nx+onx,1-onx:ny+onx,1:nz,1:3)
+ real*8,allocatable :: b1(:,:,:),b2(:,:,:),b3(:,:,:)
  character*80 :: filename
+ 
  do n=0,npes
    write(filename,'(a,i5,a)')  'restart_PE_',n,'.dta'
    call replace_space_zero(filename)
+   !print*,'reading from file ',filename(1:len_trim(filename))
    open(io,file=filename,form='unformatted',status='old')
    read(io) 
    read(io) is,ie,js,je
-   do kk=1,k; read (io); enddo
+   if (k>0) then 
+     do kk=1,k; read (io); enddo
+   endif  
+   allocate(b1(is:ie,js:je,1:nz),b2(is:ie,js:je,1:nz),b3(is:ie,js:je,1:nz))
+   b1=0;b2=0;b3=0
    if (is2D) then 
     if (is3arr) then 
-      read (io) a(is:ie,js:je,1,1:3) 
+      read (io) b1(is:ie,js:je,1),b2(is:ie,js:je,1),b3(is:ie,js:je,1) 
     else
-      read (io) a(is:ie,js:je,1,1:2) 
+      read (io) b1(is:ie,js:je,1),b2(is:ie,js:je,1) 
     endif        
    else        
     if (is3arr) then 
-     read (io) a(is:ie,js:je,1:nz,1:3) 
+     read (io) b1(is:ie,js:je,1:nz),b2(is:ie,js:je,1:nz),b3(is:ie,js:je,1:nz) 
     else 
-     read (io) a(is:ie,js:je,1:nz,1:2) 
+     read (io) b1(is:ie,js:je,1:nz),b2(is:ie,js:je,1:nz) 
     endif 
    endif
+   ! transfer only inner part of subdomain
+   a(is+onx:ie-onx,js+onx:je-onx,:,1)=b1(is+onx:ie-onx,js+onx:je-onx,:)
+   a(is+onx:ie-onx,js+onx:je-onx,:,2)=b2(is+onx:ie-onx,js+onx:je-onx,:)
+   a(is+onx:ie-onx,js+onx:je-onx,:,3)=b3(is+onx:ie-onx,js+onx:je-onx,:)
+   deallocate(b1,b2,b3)
    close(io)
+ enddo
+ ! cyclic boundary conditions
+ do i=1,onx
+   a(nx+i,:,:,:) = a(i     ,:,:,:)
+   a(1-i ,:,:,:) = a(nx-i+1,:,:,:) 
  enddo
 end subroutine 
 
@@ -210,8 +231,8 @@ subroutine write_chunk(a,nx,ny,nz,onx,n_pes_i,n_pes_j,is2D,is3arr)
  integer :: nx,ny,nz,onx,n_pes_i,n_pes_j
  integer :: my_pe,i_blk,j_blk,is_pe,ie_pe,js_pe,je_pe
  integer :: is,ie,js,je,my_blk_i,my_blk_j
- integer :: io=30
- real*8 :: a(1-onx:nx+onx,1-onx:ny+onx,1:nz,3)
+ integer :: io=10
+ real*8 :: a(1-onx:nx+onx,1-onx:ny+onx,1:nz,1:3)
  character*80 :: filename
 
  do my_pe = 0,n_pes_i*n_pes_j-1
@@ -227,24 +248,23 @@ subroutine write_chunk(a,nx,ny,nz,onx,n_pes_i,n_pes_j,is2D,is3arr)
 
    write(filename,'(a,i5,a)')  'new_restart_PE_',my_pe,'.dta'
    call replace_space_zero(filename)
+   !print*,'appending to file ',filename(1:len_trim(filename))
    open(io,file=filename,form='unformatted',status='old',access='append')
    if (is2D) then
     if (is3arr) then
-      write (io) a(is:ie,js:je,1,1:3) 
+      write (io) a(is:ie,js:je,1,1),a(is:ie,js:je,1,2),a(is:ie,js:je,1,3) 
     else  
-      write (io) a(is:ie,js:je,1,1:2) 
+      write (io) a(is:ie,js:je,1,1),a(is:ie,js:je,1,2) 
     endif  
    else        
     if (is3arr) then
-     write (io) a(is:ie,js:je,:,1:3) 
+     write (io) a(is:ie,js:je,1:nz,1),a(is:ie,js:je,1:nz,2),a(is:ie,js:je,1:nz,3)  
     else 
-     write (io) a(is:ie,js:je,:,1:2) 
+     write (io) a(is:ie,js:je,1:nz,1),a(is:ie,js:je,1:nz,2) 
     endif
    endif
    close(io)
-
  enddo
-
 end subroutine
 
 
