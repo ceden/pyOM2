@@ -27,11 +27,11 @@ module eke_module
       logical :: enable_eke_isopycnal_diffusion  = .false. ! use K_gm also for isopycnal diffusivity
 
       real*8, allocatable :: eke_topo_hrms(:,:), eke_topo_lam(:,:), hrms_k0(:,:)
-      real*8, allocatable :: c_lee(:,:)
+      real*8, allocatable :: eke_c_lee(:,:)
       real*8, allocatable :: c_Ri_diss(:,:,:)
       real*8, allocatable :: eke_lee_flux(:,:),eke_bot_flux(:,:)
       logical :: enable_eke_leewave_dissipation  = .false.  
-      real*8 :: c_lee0  = 1.0
+      real*8 :: eke_c_lee0  = 1.0
       real*8 :: eke_Ri0 = 200.0
       real*8 :: eke_Ri1 = 50.0
       real*8 :: eke_int_diss0 = 1./(20*86400.)
@@ -58,7 +58,7 @@ subroutine allocate_eke_module
       allocate( eke_topo_hrms(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx) ); eke_topo_hrms = 0.0
       allocate( eke_topo_lam(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx) ); eke_topo_lam = 0.0
       allocate( hrms_k0(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx) ); hrms_k0 = 0.0
-      allocate( c_lee(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx) ); c_lee = 0.0
+      allocate( eke_c_lee(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx) ); eke_c_lee = 0.0
       allocate( eke_lee_flux(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx) ); eke_lee_flux = 0.0
       allocate( c_Ri_diss(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz) ); c_Ri_diss = 0.0
    endif

@@ -111,14 +111,14 @@ subroutine integrate_eke
  !---------------------------------------------------------------------------------
  !by lee wave generation
  !---------------------------------------------------------------------------------
-  c_lee = 0d0
+  eke_c_lee = 0d0
   do j=js_pe,je_pe
    do i=is_pe,ie_pe
      k=kbot(i,j)
      if (k>0.and. k<nz) then ! could be surface: factor 0.5
         fxa = max(0d0,Nsqr(i,j,k,tau))**0.25 
         fxa = fxa *(1.5*fxa/sqrt(max( 1D-6,abs(coriolis_t(i,j)) )  ) -2)
-        c_lee(i,j) = c_lee0*hrms_k0(i,j)*sqrt( sqrteke(i,j,k))  * max(0D0,fxa ) /dzw(k)
+        eke_c_lee(i,j) = eke_c_lee0*hrms_k0(i,j)*sqrt( sqrteke(i,j,k))  * max(0D0,fxa ) /dzw(k)
      endif
     enddo
   enddo
@@ -160,7 +160,7 @@ subroutine integrate_eke
   do j=js_pe,je_pe
    do i=is_pe,ie_pe
      k=kbot(i,j)
-     if (k>0.and.k<nz)  a_loc(i,j) = a_loc(i,j) + c_lee(i,j)*eke(i,j,k,tau)*maskW(i,j,k)*dzw(k) ! could be surface: factor 0.5
+     if (k>0.and.k<nz)  a_loc(i,j) = a_loc(i,j) + eke_c_lee(i,j)*eke(i,j,k,tau)*maskW(i,j,k)*dzw(k) ! could be surface: factor 0.5
      if (k>0.and.k<nz)  a_loc(i,j) = a_loc(i,j) +  & 
              2*eke_r_bot*eke(i,j,k,tau)*sqrt(2.0)*sqrteke(i,j,k)*maskW(i,j,k) ! /dzw(k)*dzw(k) ! could be surface: factor 0.5
    enddo
@@ -243,7 +243,7 @@ subroutine integrate_eke
   do j=js_pe,je_pe
    do i=is_pe,ie_pe
     k=kbot(i,j)
-    if (k>0.and.k<nz) eke_diss_iw(i,j,k)  = eke_diss_iw(i,j,k) + c_lee(i,j)*eke(i,j,k,taup1)*maskW(i,j,k)
+    if (k>0.and.k<nz) eke_diss_iw(i,j,k)  = eke_diss_iw(i,j,k) + eke_c_lee(i,j)*eke(i,j,k,taup1)*maskW(i,j,k)
     if (k>0.and.k<nz) eke_diss_tke(i,j,k) = eke_diss_tke(i,j,k)+ &
                        2*eke_r_bot*eke(i,j,k,taup1)*sqrt(2.0)*sqrteke(i,j,k)*maskW(i,j,k)/dzw(k)
    enddo
@@ -278,7 +278,7 @@ subroutine integrate_eke
   do j=js_pe,je_pe
    do i=is_pe,ie_pe
      k=kbot(i,j)
-     if (k>0.and.k<nz) eke_lee_flux(i,j)=c_lee(i,j)*eke(i,j,k,taup1)*dzw(k)
+     if (k>0.and.k<nz) eke_lee_flux(i,j)=eke_c_lee(i,j)*eke(i,j,k,taup1)*dzw(k)
      if (k>0.and.k<nz) eke_bot_flux(i,j)=2*eke_r_bot*eke(i,j,k,taup1)*sqrt(2.0)*sqrteke(i,j,k)
    enddo
   enddo
