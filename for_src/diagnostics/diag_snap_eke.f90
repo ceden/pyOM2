@@ -144,7 +144,7 @@ subroutine diag_snap_eke
 
  if (enable_eke_leewave_dissipation ) then
 
-    bloc(is_pe:ie_pe,js_pe:je_pe) = c_lee(is_pe:ie_pe,js_pe:je_pe)
+    bloc(is_pe:ie_pe,js_pe:je_pe) = eke_c_lee(is_pe:ie_pe,js_pe:je_pe)
     where( maskW(is_pe:ie_pe,js_pe:je_pe,nz) == 0.) bloc(is_pe:ie_pe,js_pe:je_pe) = spval
     call pe0_recv_2D(nx,ny,bloc)
     if (my_pe==0) then  
