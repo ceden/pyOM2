@@ -6,9 +6,9 @@
 # for mac osx
 
 F90 =  mpif90
-#F90FLAGS =  -llapack -lblas -fconvert=big-endian -O3 -Wall 
+#F90FLAGS =  -fconvert=big-endian -O3 -Wall 
 F90FLAGS =  -llapack -lblas -fconvert=big-endian -O3 -Wall\
-            -fbounds-check -finit-real=nan  -finit-integer=nan
+            -fbounds-check -finit-real=nan  -finit-integer=nan -fallow-argument-mismatch
 CDFFLAGS = -I/usr/local/include -L/usr/local/lib  -lnetcdff -lnetcdf -lnetcdf 
 MPIFLAGS = 
 
