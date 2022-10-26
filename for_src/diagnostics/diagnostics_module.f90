@@ -16,6 +16,8 @@ module diagnostics_module
       logical :: enable_diag_qg_streamfct  = .false. ! enable quasi-geostrophic streamfct. diagnostics
       logical :: enable_diag_snap_fluxes   = .false. ! enable advective and diffusive flux diagnostics
       logical :: enable_diag_snap_tendency = .false. ! enable temp/salt tendency diagnostics
+      logical :: enable_diag_parallel_snap = .false. ! enable parallel output
+      
       real*8  :: snapint=0.  ! intervall between snapshots to be written in seconds
       real*8  :: aveint=0.   ! intervall between time averages to be written in seconds
       real*8  :: varint=0.   ! intervall between time variances to be written in seconds

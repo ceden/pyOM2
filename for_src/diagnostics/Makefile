@@ -5,7 +5,7 @@ all: diagnostics_module.o diag_main.o diag_averages.o diag_over.o diag_snap.o \
      diag_energy.o diag_particles.o diag_particles_netcdf.o diag_variance.o \
      diag_snap_tke.o diag_snap_eke.o diag_snap_isoneutral.o diag_snap_energy.o \
      diag_snap_idemix.o diag_snap_tracer.o diag_snap_rossmix.o diag_snap_fluxes.o \
-     diag_snap_tendency.o
+     diag_snap_tendency.o diag_snap_parallel.o
 
 clean :
 	 rm -f *.o *.mod 
@@ -65,4 +65,7 @@ diag_snap_fluxes.o: diag_snap_fluxes.f90 ../main/main_module.o  ../isoneutral/is
 
 diag_snap_tendency.o: diag_snap_tendency.f90 ../main/main_module.o  ../isoneutral/isoneutral_module.o 
 	$(F90) $(F90FLAGS) $(CDFFLAGS) -I../main  -I../isoneutral  -c diag_snap_tendency.f90
+    
+diag_snap_parallel.o: diag_snap_parallel.F90  ../main/main_module.o
+	$(F90) $(F90FLAGS) $(CDFFLAGS)  $(MPIFLAGS)  -I../main -c diag_snap_parallel.F90
 

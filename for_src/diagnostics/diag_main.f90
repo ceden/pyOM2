@@ -40,6 +40,11 @@ subroutine init_diagnostics
     if (enable_tracer) call init_snap_cdf_tracer
  endif
 
+ if ( enable_diag_parallel_snap ) then
+   call init_diag_snap_parallel
+ endif 
+
+
  if (enable_diag_averages)  then
     if (my_pe==0) print'(a,e12.6,a,f10.2,a)',' writing time averages every ',aveint,' seconds/',aveint/dt_tracer,' time steps'
     if (my_pe==0) print'(a,f10.2,a)',' calculating every ',avefreq/dt_tracer,' time step'
@@ -135,6 +140,11 @@ subroutine diagnose
     if (enable_rossmix) call diag_snap_rossmix
     if (enable_tracer) call diag_snap_tracer
  endif
+
+ if ( enable_diag_parallel_snap .and.  (mod(itt,int(snapint/dt_tracer)) ==0 .or. itt==0) ) then
+   call diag_snap_parallel
+ endif 
+
 
  if ( enable_diag_tracer_content .and.  modulo(time,trac_cont_int) < dt_tracer ) then
    call diag_tracer_content
