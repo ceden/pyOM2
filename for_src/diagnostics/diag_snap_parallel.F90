@@ -9,7 +9,7 @@ subroutine init_diag_snap_parallel
  
  include "netcdf.inc"
  include "mpif.h"
- integer :: ncid,iret,id,xtdim,ytdim,ztdim,tdim,nc_mode,start(4),count(4),n
+ integer :: ncid,iret,id,xtdim,ytdim,ztdim,tdim,nc_mode,n
  integer :: xudim,yudim,zudim
  character :: fname*80,name*32
  real*8, parameter :: spval = -1.0d33
@@ -24,7 +24,7 @@ subroutine init_diag_snap_parallel
  iret = NF_CREATE_par(fname,nc_mode,MPI_COMM_WORLD,MPI_INFO_NULL, ncid) 
  if (my_pe==0.and.iret/=0) print*,'at opening:',nf_strerror(iret)
  iret=nf_set_fill(ncid, NF_NOFILL, iret)
-  
+
  iret = nf_def_dim(ncid,'xt', nx,xtdim)
  iret = nf_def_dim(ncid,'yt', ny,ytdim)
  iret = nf_def_dim(ncid,'zt', nz,ztdim) 
@@ -44,7 +44,7 @@ subroutine init_diag_snap_parallel
   iret = nf_put_att_text(ncid,id,'long_name',len_trim('xt'),'xt')
   iret = nf_put_att_text(ncid,id,'units',len_trim('km'),'km')
  endif
- 
+
  iret = nf_def_var(ncid, 'xu',NF_DOUBLE,1,xudim,id) 
  if (coord_degree) then
   iret = nf_put_att_text(ncid,id,'long_name',len_trim('Longitude'),'Longitude')
@@ -79,16 +79,16 @@ subroutine init_diag_snap_parallel
  iret = nf_def_var(ncid, 'zu',NF_DOUBLE,1,zudim,id) 
  iret = nf_put_att_text(ncid,id,'long_name',len_trim('zu'),'zu')
  iret = nf_put_att_text(ncid,id,'units',len_trim('m'),'m') 
-  
+
  iret = nf_def_var(ncid, 'time',NF_DOUBLE,1,tdim,id)
  iret = nf_put_att_text(ncid,id,'long_name',len_trim('Time'),'Time')
  iret = nf_put_att_text(ncid,id,'units',len_trim('days'),'days') 
  iret = nf_put_att_text(ncid,id,'time_origin',len_trim('01-JAN-1900 00:00:00'),'01-JAN-1900 00:00:00')   
-   
+
  id  = ncvdef (ncid,'ht',NF_DOUBLE,2,(/xtdim, ytdim/),iret)
  iret = nf_put_att_text(ncid,id,'long_name',len_trim('depth'),'depth') 
  iret = nf_put_att_text(ncid,id,'units',len_trim('m'),'m')
-  
+         
  id  = ncvdef (ncid,'u',NF_DOUBLE,4,(/xudim, ytdim,ztdim,tdim/),iret)
  iret = nf_put_att_text(ncid,id,'long_name',len_trim('velocity'),'velocity') 
  iret = nf_put_att_text(ncid,id,'units',len_trim('m/s'),'m/s')
@@ -113,7 +113,7 @@ subroutine init_diag_snap_parallel
  iret = nf_put_att_text(ncid,id,'long_name',len_trim('Salinity'),'Salinity')
  iret = nf_put_att_text(ncid,id,'units',len_trim('g/kg'),'g/kg')
  iret = nf_put_att_double(ncid,id,'missing_value',nf_double,1,spval)
- 
+
  if (enable_streamfunction) then 
    id  = ncvdef (ncid,'psi',NF_DOUBLE,3,(/xudim, yudim,tdim/),iret)
    iret = nf_put_att_text(ncid,id,'long_name',len_trim('Streamfunction'),'Streamfunction')
@@ -218,6 +218,7 @@ subroutine init_diag_snap_parallel
  endif
 
  iret= nf_close(ncid) 
+ if (my_pe==0) print*,' done'
  
  end subroutine init_diag_snap_parallel
  
@@ -229,8 +230,7 @@ subroutine diag_snap_parallel
  implicit none 
  include "netcdf.inc"
  include "mpif.h"
- integer :: ncid,iret,id,xtdim,ytdim,ztdim,tdim,nc_mode,start(4),count(4),ilen,k
- integer :: xudim,yudim,zudim
+ integer :: ncid,iret,id,nc_mode,start(4),count(4),ilen,k
  real*8 :: aloc(is_pe:ie_pe,js_pe:je_pe,1:nz)
  real*8, parameter :: spval = -1.0d33
  character :: fname*80
