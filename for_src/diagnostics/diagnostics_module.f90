@@ -18,6 +18,7 @@ module diagnostics_module
       logical :: enable_diag_snap_tendency = .false. ! enable temp/salt tendency diagnostics
       logical :: enable_diag_parallel_snap = .false. ! enable parallel output
       logical :: enable_diag_chunks_snap   = .false. ! enable snapshot output in chunks per processor
+      logical :: enable_diag_opt_balance   = .false. ! enable optimal balance diagnostic
       
       real*8  :: snapint=0.  ! intervall between snapshots to be written in seconds
       real*8  :: aveint=0.   ! intervall between time averages to be written in seconds
@@ -30,7 +31,8 @@ module diagnostics_module
       real*8  :: overint=0.  ! intervall between overturning averages to be written in seconds
       real*8  :: overfreq=0. ! averaging overturning every ave_freq seconds 
       real*8  :: trac_cont_int=0.! intervall between tracer content monitor in seconds
-      real*8  :: particles_int=0. ! intervall  
+      real*8  :: particles_int=0. ! intervall 
+      real*8  :: opt_balance_int = 0. ! intervall
 end module diagnostics_module
 
 

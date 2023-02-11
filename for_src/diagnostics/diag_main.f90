@@ -87,6 +87,11 @@ subroutine init_diagnostics
    call init_diag_snap_tendency
  endif
  
+ if (enable_diag_opt_balance) then
+   if (my_pe==0) print'(a,e12.6,a,f10.2,a)',' diagnosting optimal balance ', &
+        opt_balance_int,' seconds/',opt_balance_int/dt_tracer,' time steps'
+ endif
+ 
 end subroutine init_diagnostics
 
 
@@ -192,6 +197,11 @@ subroutine diagnose
 
  if ( enable_diag_snap_tendency .and.  (mod(itt,int(snapint/dt_tracer)) ==0 .or. itt==0) ) then
    call diag_snap_tendency
+ endif 
+
+ if ( enable_diag_opt_balance .and.  (mod(itt,int(opt_balance_int/dt_tracer)) ==0 ).and.itt>0 ) then
+   call diag_opt_balance
+   call diag_opt_write 
  endif 
 
 end subroutine diagnose
