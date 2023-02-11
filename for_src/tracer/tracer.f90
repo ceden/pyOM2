@@ -33,8 +33,9 @@ if (enable_tracer) then
   ! horizontal diffusion
   !---------------------------------------------------------------------------------
   call tic('iso')
-  if (enable_hor_diffusion)     call tracer_diffusion(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,trac(:,:,:,:,n) )
-  if (enable_biharmonic_mixing) call tracer_biharmonic(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,trac(:,:,:,:,n) )
+  if (enable_hor_diffusion)     call tracer_diffusion(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,nz,trac(:,:,:,:,n) )
+
+  if (enable_biharmonic_mixing) call tracer_biharmonic(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,nz,trac(:,:,:,:,n) )
 
   !---------------------------------------------------------------------------------
   ! sources like restoring zones, etc
