@@ -17,8 +17,8 @@ bottom_friction.o: bottom_friction.f90 main_module.o
 	$(F90) $(F90FLAGS) -c bottom_friction.f90
 harmonic_friction.o: harmonic_friction.f90 main_module.o 
 	$(F90) $(F90FLAGS) -c harmonic_friction.f90
-biharmonic_friction.o: biharmonic_friction.f90 main_module.o 
-	$(F90) $(F90FLAGS) -c biharmonic_friction.f90
+biharmonic_friction.o: biharmonic_friction.f90 main_module.o  ../isoneutral/isoneutral_module.o
+	$(F90) $(F90FLAGS) -I../isoneutral -c biharmonic_friction.f90
 diffusion.o: diffusion.f90 main_module.o 
 	$(F90) $(F90FLAGS) -c diffusion.f90
 

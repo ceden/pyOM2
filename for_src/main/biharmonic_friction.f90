@@ -163,4 +163,119 @@ end subroutine biharmonic_friction
 
 
 
+subroutine biharmonic_thickness_mixing
+ use main_module
+ use isoneutral_module 
+ implicit none
+ integer :: i,j,k
+ real*8 :: del2(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz),fxa,fxb,f1,f2
+ real*8 :: diss(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
+
+ if (.not.enable_TEM_friction .and. enable_conserve_energy) K_diss_gm = 0d0
+
+ !---------------------------------------------------------------------------------
+ ! Zonal velocity
+ !---------------------------------------------------------------------------------
+ do j=js_pe-1,je_pe+1   
+   do i=is_pe-2,ie_pe+1
+    flux_east(i,j,:)=(u(i+1,j,:,tau)-u(i,j,:,tau))/(cost(j)*dxt(i+1))*maskU(i+1,j,:)*maskU(i,j,:)
+   enddo
+ enddo
+ do j=js_pe-2,je_pe+1
+  do i=is_pe-1,ie_pe+1
+   flux_north(i,j,:)=(u(i,j+1,:,tau)-u(i,j,:,tau))/dyu(j)*maskU(i,j+1,:)*maskU(i,j,:)*cosu(j)
+  enddo 
+ enddo 
+
+ do j=js_pe-1,je_pe+1
+   do i=is_pe-1,ie_pe+1
+    del2(i,j,:)= (flux_east(i,j,:) - flux_east(i-1,j,:))/(cost(j)*dxu(i)) &
+                +(flux_north(i,j,:) - flux_north(i,j-1,:))/(cost(j)*dyt(j)) 
+  enddo
+ enddo
+
+ do k=1,nz-1
+  do j=js_pe-1,je_pe
+   fxb = A_thkbi * (cost(j)**biha_friction_cosPower)**2
+   do i=is_pe-1,ie_pe
+    f1 = max(thkbi_f_min, abs(coriolis_t(i  ,j)))
+    f2 = max(thkbi_f_min, abs(coriolis_t(i+1,j)))
+    fxa =fxb*(  0.5*min(0.01d0,f1**2/max(1d-12,Nsqr(i  ,j,k,tau)) ) &
+              + 0.5*min(0.01d0,f2**2/max(1d-12,Nsqr(i+1,j,k,tau)) ) )     
+    flux_top(i,j,k)=fxa*(del2(i,j,k+1)-del2(i,j,k))/dzw(k)*maskU(i,j,k+1)*maskU(i,j,k)
+   enddo
+  enddo
+ enddo
+ flux_top(:,:,nz)=0d0
+ k=1; du_mix(:,:,k) = du_mix(:,:,k) - flux_top(:,:,k)/dzt(k)*maskU(:,:,k)
+ do k=2,nz
+   du_mix(:,:,k) = du_mix(:,:,k) - (flux_top(:,:,k)-flux_top(:,:,k-1))/dzt(k)*maskU(:,:,k)
+ enddo
+ 
+ if (enable_conserve_energy) then
+ !---------------------------------------------------------------------------------
+ ! dissipation
+ !---------------------------------------------------------------------------------
+  k=1; diss(:,:,k) = maskU(:,:,k)*u(:,:,k,tau)*flux_top(:,:,k)/dzt(k)*maskU(:,:,k)
+  do k=2,nz
+   diss(:,:,k) = maskU(:,:,k)*u(:,:,k,tau)*(flux_top(:,:,k)-flux_top(:,:,k-1))/dzt(k)*maskU(:,:,k)
+  enddo  
+  call calc_diss(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,nz,diss,K_diss_gm,'U')
+ endif
+
+
+ !---------------------------------------------------------------------------------
+ ! Meridional velocity
+ !---------------------------------------------------------------------------------
+ do j=js_pe-1,je_pe+1
+   do i=is_pe-2,ie_pe+1
+    flux_east(i,j,:)=(v(i+1,j,:,tau)-v(i,j,:,tau))/(cosu(j)*dxu(i)) *maskV(i+1,j,:)*maskV(i,j,:)
+   enddo
+ enddo
+ do j=js_pe-2,je_pe+1
+   do i=is_pe-1,ie_pe+1
+    flux_north(i,j,:)=(v(i,j+1,:,tau)-v(i,j,:,tau) )/dyt(j+1)*cost(j+1)*maskV(i,j,:)*maskV(i,j+1,:)
+   enddo
+ enddo
+
+ do j=js_pe-1,je_pe+1
+  do i=is_pe-1,ie_pe+1
+    del2(i,j,:)=  (flux_east(i,j,:) - flux_east(i-1,j,:))/(cosu(j)*dxt(i))  &
+                 +(flux_north(i,j,:) - flux_north(i,j-1,:))/(dyu(j)*cosu(j)) 
+  enddo
+ enddo
+
+ do k=1,nz-1
+  do j=js_pe-1,je_pe
+   fxb = A_thkbi * (cosu(j)**biha_friction_cosPower)**2
+   do i=is_pe-1,ie_pe
+    f1 = max(thkbi_f_min, abs(coriolis_t(i,j  )))
+    f2 = max(thkbi_f_min, abs(coriolis_t(i,j+1)))
+    fxa =fxb*(  0.5*min(0.01d0,f1**2/max(1d-12,Nsqr(i,j  ,k,tau)) ) &
+              + 0.5*min(0.01d0,f2**2/max(1d-12,Nsqr(i,j+1,k,tau)) ) )  
+    flux_top(i,j,k)=fxa*(del2(i,j,k+1)-del2(i,j,k))/dzw(k)*maskV(i,j,k+1)*maskV(i,j,k)
+   enddo
+  enddo
+ enddo
+ flux_top(:,:,nz)=0d0
+ k=1; dv_mix(:,:,k) = dv_mix(:,:,k) - flux_top(:,:,k)/dzt(k)*maskV(:,:,k)
+ do k=2,nz
+   dv_mix(:,:,k) = dv_mix(:,:,k) - (flux_top(:,:,k)-flux_top(:,:,k-1))/dzt(k)*maskV(:,:,k)
+ enddo
+
+ if (enable_conserve_energy) then
+ !---------------------------------------------------------------------------------
+ ! dissipation
+ !---------------------------------------------------------------------------------
+  k=1; diss(:,:,k) = maskV(:,:,k)*v(:,:,k,tau)*flux_top(:,:,k)/dzt(k)*maskV(:,:,k)
+  do k=2,nz
+   diss(:,:,k) = maskV(:,:,k)*v(:,:,k,tau)*(flux_top(:,:,k)-flux_top(:,:,k-1))/dzt(k)*maskV(:,:,k)
+  enddo
+  call calc_diss(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,nz,diss,K_diss_gm,'V')
+ endif
+
+end subroutine biharmonic_thickness_mixing
+
+
+
 

@@ -64,6 +64,7 @@ module main_module
       logical :: enable_hor_friction               = .false. ! enable horizontal friction
       logical :: enable_hor_diffusion              = .false. ! enable horizontal diffusion
       logical :: enable_biharmonic_friction        = .false. ! enable biharmonic horizontal friction
+      logical :: enable_biharmonic_thickness_mixing= .false. ! enable biharmonic thickness mixing (in res. mom. formulation)
       logical :: enable_biharmonic_mixing          = .false. ! enable biharmonic horizontal mixing
       logical :: enable_hor_friction_cos_scaling   = .false. ! scaling of hor. viscosity with cos(latitude)**cosPower
       logical :: enable_ray_friction               = .false. ! enable Rayleigh damping
@@ -200,8 +201,10 @@ module main_module
       integer :: hor_friction_cosPower = 3
       real*8 :: biha_friction_cosPower = 0.0
       real*8 :: biha_mixing_cosPower   = 0.0
-      real*8 :: A_hbi=0.0  ! lateral biharmonic viscosity in m^4/s
-      real*8 :: K_hbi=0.0  ! lateral biharmonic diffusivity in m^4/s
+      real*8 :: A_hbi = 0.0   ! lateral biharmonic viscosity in m^4/s
+      real*8 :: A_thkbi = 0.0 ! biharmonic thickness diffusivity in m^4/s
+      real*8 :: thkbi_f_min = 1e-6 ! threshold for Coriolis parameter in the formulation in 1/s
+      real*8 :: K_hbi = 0.0   ! lateral biharmonic diffusivity in m^4/s
       real*8 :: kappaH_0 = 0.0, kappaM_0 = 0.0   ! fixed values for vertical viscosity/diffusivity which are set for no TKE model
       real*8, allocatable :: kappaM(:,:,:)       ! vertical viscosity in m^2/s
       real*8, allocatable :: kappaH(:,:,:)       ! vertical diffusivity in m^2/s
