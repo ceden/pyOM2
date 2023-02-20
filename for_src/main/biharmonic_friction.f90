@@ -168,10 +168,28 @@ subroutine biharmonic_thickness_mixing
  use isoneutral_module 
  implicit none
  integer :: i,j,k
- real*8 :: del2(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz),fxa,fxb,f1,f2
+ real*8 :: del2(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz),fxa,fxb,f_loc,Nsqr_loc!,f2
  real*8 :: diss(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
+ real*8 :: kappa(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
 
  if (.not.enable_TEM_friction .and. enable_conserve_energy) K_diss_gm = 0d0
+
+ do k=1,nz
+  do j=js_pe-onx,je_pe+onx   
+   do i=is_pe-onx,ie_pe+onx    
+    f_loc = max(thkbi_f_min,abs(coriolis_t(i,j)) )
+    Nsqr_loc = max(1d-12,Nsqr(i,j,k,tau))
+    fxa = (tanh(( sqrt(Nsqr_loc)/f_loc - 10.)*2)+1.)/2.
+    fxb = A_thkbi * (cost(j)**biha_friction_cosPower)**2
+    kappa(i,j,k) = fxa*fxb*f_loc**2/Nsqr_loc*maskT(i,j,k)
+    ! different clipping function
+    !f1 = max(thkbi_f_min, abs(coriolis_t(i  ,j)))
+    !f2 = max(thkbi_f_min, abs(coriolis_t(i+1,j)))
+    !kappa(i,j,k) =fxb*(  0.5*min(0.01d0,f1**2/max(1d-12,Nsqr(i  ,j,k,tau)) ) &
+    !                   + 0.5*min(0.01d0,f2**2/max(1d-12,Nsqr(i+1,j,k,tau)) ) )        
+   enddo
+  enddo
+ enddo
 
  !---------------------------------------------------------------------------------
  ! Zonal velocity
@@ -196,12 +214,8 @@ subroutine biharmonic_thickness_mixing
 
  do k=1,nz-1
   do j=js_pe-1,je_pe
-   fxb = A_thkbi * (cost(j)**biha_friction_cosPower)**2
-   do i=is_pe-1,ie_pe
-    f1 = max(thkbi_f_min, abs(coriolis_t(i  ,j)))
-    f2 = max(thkbi_f_min, abs(coriolis_t(i+1,j)))
-    fxa =fxb*(  0.5*min(0.01d0,f1**2/max(1d-12,Nsqr(i  ,j,k,tau)) ) &
-              + 0.5*min(0.01d0,f2**2/max(1d-12,Nsqr(i+1,j,k,tau)) ) )     
+   do i=is_pe-1,ie_pe 
+    fxa = 0.5*(kappa(i,j,k)+kappa(i+1,j,k))
     flux_top(i,j,k)=fxa*(del2(i,j,k+1)-del2(i,j,k))/dzw(k)*maskU(i,j,k+1)*maskU(i,j,k)
    enddo
   enddo
@@ -247,12 +261,8 @@ subroutine biharmonic_thickness_mixing
 
  do k=1,nz-1
   do j=js_pe-1,je_pe
-   fxb = A_thkbi * (cosu(j)**biha_friction_cosPower)**2
-   do i=is_pe-1,ie_pe
-    f1 = max(thkbi_f_min, abs(coriolis_t(i,j  )))
-    f2 = max(thkbi_f_min, abs(coriolis_t(i,j+1)))
-    fxa =fxb*(  0.5*min(0.01d0,f1**2/max(1d-12,Nsqr(i,j  ,k,tau)) ) &
-              + 0.5*min(0.01d0,f2**2/max(1d-12,Nsqr(i,j+1,k,tau)) ) )  
+   do i=is_pe-1,ie_pe 
+    fxa = 0.5*(kappa(i,j,k)+kappa(i,j+1,k))          
     flux_top(i,j,k)=fxa*(del2(i,j,k+1)-del2(i,j,k))/dzw(k)*maskV(i,j,k+1)*maskV(i,j,k)
    enddo
   enddo
