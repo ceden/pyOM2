@@ -191,23 +191,24 @@ module main_module
 !---------------------------------------------------------------------------------
 !     mixing parameter
 !---------------------------------------------------------------------------------
-      real*8 :: A_h=0.0    ! lateral viscosity in m^2/s
-      real*8 :: K_h=0.0    ! lateral diffusivity in m^2/s
-      real*8 :: r_ray=0.0  ! Rayleigh damping coefficient in 1/s  
-      real*8 :: r_bot=0.0  ! bottom friction coefficient in 1/s
+      real*8 :: A_h=0.0         ! lateral viscosity in m^2/s
+      real*8 :: K_h=0.0         ! lateral diffusivity in m^2/s
+      real*8 :: r_ray=0.0       ! Rayleigh damping coefficient in 1/s  
+      real*8 :: r_bot=0.0       ! bottom friction coefficient in 1/s
       real*8 :: r_quad_bot=0.0  ! qudratic bottom friction coefficient
-      real*8, allocatable :: r_bot_var_u(:,:)     ! bottom friction coefficient in 1/s, on u points
-      real*8, allocatable :: r_bot_var_v(:,:)     ! bottom friction coefficient in 1/s, on v points
+      real*8, allocatable :: r_bot_var_u(:,:)   ! bottom friction coefficient in 1/s, on u points
+      real*8, allocatable :: r_bot_var_v(:,:)   ! bottom friction coefficient in 1/s, on v points
       integer :: hor_friction_cosPower = 3
-      real*8 :: biha_friction_cosPower = 0.0
-      real*8 :: biha_mixing_cosPower   = 0.0
-      real*8 :: A_hbi = 0.0   ! lateral biharmonic viscosity in m^4/s
-      real*8 :: A_thkbi = 0.0 ! biharmonic thickness diffusivity in m^4/s
-      real*8 :: thkbi_f_min = 1e-6 ! threshold for Coriolis parameter in the formulation in 1/s
-      real*8 :: K_hbi = 0.0   ! lateral biharmonic diffusivity in m^4/s
-      real*8 :: kappaH_0 = 0.0, kappaM_0 = 0.0   ! fixed values for vertical viscosity/diffusivity which are set for no TKE model
-      real*8, allocatable :: kappaM(:,:,:)       ! vertical viscosity in m^2/s
-      real*8, allocatable :: kappaH(:,:,:)       ! vertical diffusivity in m^2/s
+      real*8 :: biha_friction_cosPower = 0.0    ! exponent n in cos(y)**n which multiplies A_hbi and A_thkbi
+      real*8 :: biha_mixing_cosPower   = 0.0    ! same for K_hbi
+      real*8 :: A_hbi = 0.0                     ! lateral biharmonic viscosity in m^4/s
+      real*8 :: A_thkbi = 0.0                   ! biharmonic thickness diffusivity in m^4/s
+      real*8 :: thkbi_f_min = 1e-6              ! threshold for Coriolis parameter in the formulation in 1/s
+      integer:: biharmonic_thickness_mixing_iter = 1 ! iterations in sub loop for the formulation
+      real*8 :: K_hbi = 0.0                     ! lateral biharmonic diffusivity in m^4/s
+      real*8 :: kappaH_0 = 0.0, kappaM_0 = 0.0  ! fixed values for vertical viscosity/diffusivity which are set for no TKE model
+      real*8, allocatable :: kappaM(:,:,:)      ! vertical viscosity in m^2/s
+      real*8, allocatable :: kappaH(:,:,:)      ! vertical diffusivity in m^2/s
 !---------------------------------------------------------------------------------
 !     non hydrostatic stuff
 !---------------------------------------------------------------------------------
