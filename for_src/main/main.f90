@@ -209,7 +209,9 @@ subroutine setup
   use tke_module   
   use idemix_module   
   implicit none
-
+  integer :: i,j,k
+  real*8 :: fxa,fxb,dt_loc
+ 
   if (my_pe==0) print'(/a/)','setting up everything'
 
 !--------------------------------------------------------------
@@ -277,5 +279,56 @@ subroutine setup
     if (my_pe==0) print'(a/)','        -> switch on enable_implicit_vert_fricton        '
     call halt_stop(' in setup')
   endif
+  
+  if (enable_explicit_vert_friction) then
+   fxa=0
+   do k=1,nz 
+     fxa = max(fxa, kappaM_0*dt_mom*4/dzt(k)**2 )       
+   enddo 
+   if (my_pe==0) print*,' vertical viscosity max criterium = ',fxa
+   if (fxa>1.) then
+     if (my_pe==0) print*,'ERROR: kappaM_0 too large, criterium must be <1'
+     !call halt_stop('in setup')
+   endif 
+  endif
+  
+  if (enable_biharmonic_friction) then
+   fxa = 0.
+   do j=js_pe,je_pe
+    do i=is_pe,ie_pe
+     fxb = A_hbi*(cost(j)**biha_friction_cosPower)**2
+     fxa = max(fxa, fxb*dt_mom*(4/(cost(j)*dxt(i))**2)**2)
+     fxa = max(fxa, fxb*dt_mom*(4/(dyt(j))**2        )**2)
+    enddo 
+   enddo 
+   call global_max(fxa) 
+   if (my_pe==0) print*,' biharm. viscosity max criterium = ',fxa
+   if (fxa>1.) then
+     if (my_pe==0) print*,'ERROR: A_hbi too large, criterium must be <1'
+     !call halt_stop('in setup')
+   endif
+  endif
+  
+  if (enable_biharmonic_thickness_mixing) then
+   fxa = 0.
+   dt_loc = dt_mom/biharmonic_thickness_mixing_iter
+   do k=1,nz
+    do j=js_pe,je_pe
+     do i=is_pe,ie_pe
+      fxb = A_thkbi*(cost(j)**biha_friction_cosPower)**2 * (1./10.)**2
+      fxa = max( fxa, fxb*dt_loc*2/(cost(j)*dxt(i))**2*2/dzt(k)**2 )
+      fxa = max( fxa, fxb*dt_loc*2/(        dyt(j))**2*2/dzt(k)**2 )
+     enddo 
+    enddo
+   enddo 
+   call global_max(fxa) 
+   if (my_pe==0) print*,' biharm. thickness diffusion max criterium = ',fxa
+   if (fxa>1) then
+     if (my_pe==0) print*,'ERROR: A_thkbi too large,  criterium must be <1'
+     !call halt_stop('in setup')
+   endif
+  endif
+  
+  
 end subroutine setup
 
