@@ -9,6 +9,7 @@ module diag_opt_balance_module
  integer :: opt_balance_max_Itts = 5
  real*8 :: opt_balance_period  = 86400.*5
  real*8 :: opt_balance_average = 86400.*5
+ integer :: opt_balance_average_times = 1
  real*8 :: opt_balance_tol     = 1d-9
  logical :: opt_balance_temp_only = .false.
  
@@ -30,7 +31,7 @@ subroutine diag_opt_balance
  use main_module
  use diag_opt_balance_module
  implicit none
- integer :: n,n_end_ramp,n_end_ave
+ integer :: n,m,n_end_ramp,n_end_ave
  real*8,allocatable, dimension(:,:,:,:) :: u_bak,v_bak,w_bak,du_bak,dv_bak
  real*8,allocatable, dimension(:,:,:)   :: psi_bak,dpsi_bak
  real*8,allocatable, dimension(:,:,:,:) :: temp_bak,salt_bak,dtemp_bak,dsalt_bak
@@ -159,8 +160,17 @@ subroutine diag_opt_balance
  enddo
 
  ! save base point by time averaging in linear model
- if (my_pe==0)  print '(a,i5,a)',' integrating linear model for ',n_end_ave,' timesteps ' 
- call diag_opt_geostrophy(n_end_ave,u_base,v_base,w_base,temp_base,salt_base,rho_base,psi_base)
+ if (my_pe==0)  print '(a,i5,a,i5,a)',' integrating linear model for ',&
+                       n_end_ave*opt_balance_average_times,' timesteps in ', &
+                       opt_balance_average_times,' chunks'
+
+ do m=1,opt_balance_average_times
+  call diag_opt_time_ave(n_end_ave,u_base,v_base,w_base,temp_base,salt_base,rho_base,psi_base)
+  do i=1,3
+     u(:,:,:,i) = u_base;v(:,:,:,i) = v_base; w(:,:,:,i) = w_base; psi(:,:,i) = psi_base
+     temp(:,:,:,i) = temp_base; salt(:,:,:,i) = salt_base; rho(:,:,:,i)  = rho_base
+  enddo 
+ enddo
 
  ! restore model state
  do i=1,3
@@ -180,13 +190,15 @@ subroutine diag_opt_balance
     call diag_opt_backward_integration(n_end_ramp)
 
     ! project on geostrophic mode at linear end
-    if (my_pe==0)  print '(a,i5,a)',' integrating linear model for ',n_end_ave,' timesteps '  
-    call diag_opt_geostrophy(n_end_ave,u_loc,v_loc,w_loc,temp_loc,salt_loc,rho_loc,psi_loc)
-
-    ! set model state to averaged fields
-    do i=1,3
+    if (my_pe==0)  print '(a,i5,a,i5,a)',' integrating linear model for ',&
+                       n_end_ave*opt_balance_average_times,' timesteps in ', &
+                       opt_balance_average_times,' chunks'
+    do m=1,opt_balance_average_times
+     call diag_opt_time_ave(n_end_ave,u_loc,v_loc,w_loc,temp_loc,salt_loc,rho_loc,psi_loc)
+     do i=1,3
       u(:,:,:,i) = u_loc; v(:,:,:,i) = v_loc; w(:,:,:,i) = w_loc; psi(:,:,i) = psi_loc
       temp(:,:,:,i) = temp_loc; salt(:,:,:,i) = salt_loc; rho(:,:,:,i) = rho_loc
+     enddo
     enddo
     
     ! integrate forward to the non linear end
@@ -198,8 +210,16 @@ subroutine diag_opt_balance
     temp_save = temp(:,:,:,1); salt_save = salt(:,:,:,1); rho_save = rho(:,:,:,1)
     
     ! apply boundary condition at non linear end
-    if (my_pe==0)  print '(a,i5,a)',' integrating linear model for ',n_end_ave,' timesteps ' 
-    call diag_opt_geostrophy(n_end_ave,u_loc,v_loc,w_loc,temp_loc,salt_loc,rho_loc,psi_loc)
+    if (my_pe==0)  print '(a,i5,a,i5,a)',' integrating linear model for ',&
+                       n_end_ave*opt_balance_average_times,' timesteps in ', &
+                       opt_balance_average_times,' chunks'
+    do m=1,opt_balance_average_times
+     call diag_opt_time_ave(n_end_ave,u_loc,v_loc,w_loc,temp_loc,salt_loc,rho_loc,psi_loc)
+     do i=1,3
+      u(:,:,:,i) = u_loc; v(:,:,:,i) = v_loc; w(:,:,:,i) = w_loc; psi(:,:,i) = psi_loc
+      temp(:,:,:,i) = temp_loc; salt(:,:,:,i) = salt_loc; rho(:,:,:,i) = rho_loc
+     enddo
+    enddo
 
     ! exchange base point
     do i=1,3
@@ -534,7 +554,7 @@ end subroutine diag_opt_time_step_linear
 
 
 
-subroutine diag_opt_geostrophy(n_end,u_loc,v_loc,w_loc,temp_loc,salt_loc,rho_loc,psi_loc)
+subroutine diag_opt_time_ave(n_end,u_loc,v_loc,w_loc,temp_loc,salt_loc,rho_loc,psi_loc)
   use main_module
   use diag_opt_balance_module
   implicit none
@@ -578,7 +598,7 @@ subroutine diag_opt_geostrophy(n_end,u_loc,v_loc,w_loc,temp_loc,salt_loc,rho_loc
   temp(:,:,:,taum1) = temp(:,:,:,tau); salt(:,:,:,taum1) = salt(:,:,:,tau);
   psi(:,:,taum1) = psi(:,:,tau); rho(:,:,:,taum1) = rho(:,:,:,tau)
   
-end subroutine diag_opt_geostrophy
+end subroutine diag_opt_time_ave
 
 
 
