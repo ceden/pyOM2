@@ -103,6 +103,13 @@ subroutine init_snap_cdf
        call dvcdf(ncid,id,name,32,unit,16,spval)
       endif
 
+      if (enable_biharmonic_thickness_mixing) then
+       dims = (/Lon_tdim,lat_tdim,z_udim,iTimedim/)
+       id  = ncvdef (ncid,'K_thkbi', NCFLOAT,4,dims,iret)
+       name = 'Viscosity'; unit = 'm^4/s'
+       call dvcdf(ncid,id,name,32,unit,16,spval)
+      endif
+
       dims = (/Lon_tdim,lat_tdim,iTimedim,1/)
       id  = ncvdef (ncid,'forc_temp_surface', NCFLOAT,3,dims,iret)
       name = 'Surface temperature flux'; unit = 'deg C m/s'
@@ -266,7 +273,16 @@ subroutine diag_snap
     endif
    endif
 
-
+   if (enable_biharmonic_thickness_mixing) then
+    bloc(is_pe:ie_pe,js_pe:je_pe) = K_thkbi(is_pe:ie_pe,js_pe:je_pe,k)
+    where( maskW(is_pe:ie_pe,js_pe:je_pe,k) == 0.) bloc(is_pe:ie_pe,js_pe:je_pe) = spval
+    call pe0_recv_2D(nx,ny,bloc)
+    if (my_pe == 0 ) then 
+       iret=nf_inq_varid(ncid,'K_thkbi',id)
+       iret= nf_put_vara_double(ncid,id,(/1,1,k,ilen/), (/nx,ny,1,1/),bloc)
+    endif
+   endif
+   
    if (.not.enable_streamfunction) then
     ! total pressure 
     bloc(is_pe:ie_pe,js_pe:je_pe) = p_hydro(is_pe:ie_pe,js_pe:je_pe,k) + psi(is_pe:ie_pe,js_pe:je_pe,tau) 
