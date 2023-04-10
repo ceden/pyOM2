@@ -304,9 +304,19 @@ subroutine diag_opt_time_step
   enddo
  enddo
 
+
+
  ! integrate forward in time
  u(:,:,:,taup1)=u(:,:,:,tau)+dt_mom*(  opt_A_ab*du(:,:,:,tau) + opt_B_ab*du(:,:,:,taum1) )*maskU
  v(:,:,:,taup1)=v(:,:,:,tau)+dt_mom*(  opt_A_ab*dv(:,:,:,tau) + opt_B_ab*dv(:,:,:,taum1) )*maskV
+ 
+ if (enable_biharmonic_friction) then
+   du_mix=0;dv_mix=0
+   call biharmonic_friction
+   u(:,:,:,taup1)=u(:,:,:,taup1)+dt_mom*du_mix
+   v(:,:,:,taup1)=v(:,:,:,taup1)+dt_mom*dv_mix 
+ endif 
+ 
  
  ! forcing for surface pressure 
  fpx=0.;fpy=0.
