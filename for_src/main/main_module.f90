@@ -66,6 +66,7 @@ module main_module
       logical :: enable_biharmonic_friction        = .false. ! enable biharmonic horizontal friction
       logical :: enable_biharmonic_thickness_mixing= .false. ! enable biharmonic thickness mixing (in res. mom. formulation)
       logical :: enable_biharmonic_thickness_cut_upper = .false. ! cut upper XX meter for that formulation
+      logical :: enable_biharmonic_thickness_scale_A_thkbi_cut = .false. ! scale that parameter with cos(lat)**2
       logical :: enable_biharmonic_mixing          = .false. ! enable biharmonic horizontal mixing
       logical :: enable_hor_friction_cos_scaling   = .false. ! scaling of hor. viscosity with cos(latitude)**cosPower
       logical :: enable_ray_friction               = .false. ! enable Rayleigh damping
@@ -88,7 +89,9 @@ module main_module
                                                              ! take from heat reservior
       logical :: enable_store_lateral_friction_heat= .false. ! transfer dissipation by harmonic and biharmonic friction to heat
                                                              ! instead of other energy compartments
-                      
+      logical :: enable_store_gm_diss_in_idemix    = .true.  ! transfer dissipation by GM to gravity wave energy
+                                                             ! (if Idemix is enabled and enable_conserve_energy=.true.)
+      
 !---------------------------------------------------------------------------------
 !     variables related to numerical grid
 !---------------------------------------------------------------------------------

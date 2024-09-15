@@ -168,7 +168,7 @@ subroutine biharmonic_thickness_mixing
  use isoneutral_module 
  implicit none
  integer :: i,j,k,n
- real*8 :: del2(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz),fxa,fxb,f_loc,Nsqr_loc!,f2
+ real*8 :: del2(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz),fxa,fxb,fxc,f_loc,Nsqr_loc!,f2
  real*8 :: aloc(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz),dt_loc
  real*8 :: kappa(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz) 
  real*8 :: visc(js_pe-onx:je_pe+onx)
@@ -205,7 +205,12 @@ subroutine biharmonic_thickness_mixing
  !---------------------------------------------------------------------------------
  visc = A_thkbi * cost**(2*biha_friction_cosPower)
  do k=1,nz
-  do j=js_pe-onx,je_pe+onx   
+  do j=js_pe-onx,je_pe+onx  
+   fxc = A_thkbi_cut
+   if (enable_biharmonic_thickness_scale_A_thkbi_cut)  then
+      fxc = fxc*(tanh((yt(j)+60)/5.)+1)/2.*(1-tanh((yt(j)-60)/5.))/2.
+     !fxc = fxc*cost(j)**(2*biha_friction_cosPower)
+   endif 
    do i=is_pe-onx,ie_pe+onx    
     f_loc = max(thkbi_f_min,abs(coriolis_t(i,j)) )
     Nsqr_loc = max(1d-24,Nsqr(i,j,k,tau))
@@ -213,7 +218,7 @@ subroutine biharmonic_thickness_mixing
     fxb = visc(j) * f_loc*f_loc/Nsqr_loc * maskW(i,j,k)
     !fxa = (tanh(( sqrt(Nsqr_loc)/f_loc - 10.)*2)+1.)/2. ! clipping function for small N
     ! upper threshold from stability criterium
-    kappa(i,j,k) = min(  fxb, A_thkbi_cut*max(cost(j)*dxt(i),dyt(j))**2*dzt(k)**2/(16*dt_loc) ) 
+    kappa(i,j,k) = min(  fxb, fxc*max(cost(j)*dxt(i),dyt(j))**2*dzt(k)**2/(16*dt_loc) ) 
     !kappa(i,j,k) = fxb 
     K_thkbi(i,j,k) = kappa(i,j,k)/max(1e-12,fxb)
 

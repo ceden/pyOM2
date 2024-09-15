@@ -119,7 +119,11 @@ subroutine idemix_forcing(is_,ie_,js_,je_,nz_,forc)
  if (enable_eke) then
       forc = eke_diss_iw
  else ! short cut without EKE model
-      forc = K_diss_gm  - P_diss_skew
+      if (enable_store_gm_diss_in_idemix) then
+        forc = K_diss_gm  - P_diss_skew
+      else
+        forc = 0d0
+      endif
       if (.not. enable_store_lateral_friction_heat)  forc = forc + K_diss_h
       if (.not. enable_store_cabbeling_heat)         forc = forc - P_diss_hmix  - P_diss_iso
  endif
