@@ -171,7 +171,10 @@ end subroutine solve_pressure
     call setcyclic_xy   (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,p)
     rsold =  dot_sfp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,res,res)
 
-    if (rsold == 0d0) goto 101
+    if (rsold == 0d0) then
+      n=0
+      goto 101
+    endif
     
     do n=1,congr_max_iterations
 !----------------------------------------------------------------------
