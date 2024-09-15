@@ -13,7 +13,6 @@ subroutine integrate_idemix_M2
  real*8 :: advp_fn(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,np) 
  real*8 :: advp_ft(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,np) 
  call adv_flux_superbee_spectral(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn,advp_ft,E_M2,u_M2,v_M2,w_M2)
- call reflect_flux(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn)
  
  call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn) !FP 2020
  call setcyclic_xyp (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn) ! that should not be necessary
@@ -21,6 +20,8 @@ subroutine integrate_idemix_M2
  call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
  call setcyclic_xyp (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
  call set_obc_boundary_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
+
+ call reflect_flux(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn)
  
  do k=2,np-1
   do j=js_pe,je_pe
@@ -57,14 +58,15 @@ subroutine integrate_idemix_niw
 
 
  call adv_flux_superbee_spectral(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn,advp_ft,E_niw,u_niw,v_niw,w_niw)
- call reflect_flux(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn)
- 
+  
  call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn)   !FP 2020 
  call setcyclic_xyp (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn)
  call set_obc_boundary_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fn)
  call border_exchg_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
  call setcyclic_xyp (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
  call set_obc_boundary_xyp(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe)
+
+ call reflect_flux(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,np,advp_fe,advp_fn)
  
  do k=2,np-1
   do j=js_pe,je_pe
