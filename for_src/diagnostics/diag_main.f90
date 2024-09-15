@@ -342,6 +342,7 @@ subroutine panic_snap
  use eke_module
  use idemix_module
  use rossmix_module
+ use rossmix2_module
  use isoneutral_module
  use diagnostics_module
  implicit none
@@ -364,6 +365,7 @@ subroutine panic_snap
  if (enable_conserve_energy) call diag_snap_energy
  if (enable_idemix) call diag_snap_idemix
  if (enable_rossmix) call diag_snap_rossmix
+ if (enable_rossmix2) call rossmix2_diag_snap
  
 end subroutine panic_snap
 

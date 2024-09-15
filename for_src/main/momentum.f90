@@ -8,7 +8,8 @@ subroutine momentum
  use main_module   
  use isoneutral_module   
  use idemix_module   
- use rossmix_module   
+ use rossmix_module  
+ use rossmix2_module  
  use timing_module   
  implicit none
  integer :: i,j,k
@@ -121,7 +122,7 @@ subroutine momentum
  if (enable_idemix .and. enable_leewaves) call idemix_friction_lee
  
  if (enable_rossmix .and. enable_rossmix_mean_flow_interaction ) call rossmix_friction
- 
+ if (enable_rossmix2  ) call rossmix2_friction
  !---------------------------------------------------------------------------------
  !horizontal friction
  !---------------------------------------------------------------------------------

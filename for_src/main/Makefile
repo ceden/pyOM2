@@ -31,8 +31,8 @@ time_step.o: time_step.f90 main_module.o
 	$(F90) $(F90FLAGS)  $(CDFFLAGS) -c time_step.f90
 
 momentum.o: momentum.f90 main_module.o ../isoneutral/isoneutral_module.o ../etc/timing_module.o \
-	     ../idemix/idemix_module.o ../rossmix/rossmix_module.o
-	$(F90) $(F90FLAGS) -I../isoneutral -I../idemix -I../rossmix -I../etc -c momentum.f90
+	     ../idemix/idemix_module.o ../rossmix/rossmix_module.o ../rossmix2/rossmix2_module.o
+	$(F90) $(F90FLAGS) -I../isoneutral -I../idemix -I../rossmix -I../rossmix2 -I../etc -c momentum.f90
 
 momentum_advection.o: momentum_advection.f90 main_module.o 
 	$(F90) $(F90FLAGS) -c momentum_advection.f90
@@ -42,10 +42,10 @@ vertical_velocity.o: vertical_velocity.f90 main_module.o
 
 thermodynamics.o: thermodynamics.f90 main_module.o \
                   ../isoneutral/isoneutral_module.o ../tke/tke_module.o \
-                  ../density/density.o ../etc/timing_module.o ../rossmix/rossmix_module.o
-	$(F90) $(F90FLAGS) -I../isoneutral -I../etc -I../density -I../tke -I../rossmix -c thermodynamics.f90
+                  ../density/density.o ../etc/timing_module.o ../rossmix/rossmix_module.o ../rossmix2/rossmix2_module.o
+	$(F90) $(F90FLAGS) -I../isoneutral -I../etc -I../density -I../tke -I../rossmix -I../rossmix2 -c thermodynamics.f90
 
 restart.o: restart.f90  main_module.o ../tke/tke_module.o ../eke/eke_module.o \
-           ../idemix/idemix_module.o
-	$(F90) $(F90FLAGS) -I../tke -I../eke -I../idemix -c restart.f90
+           ../idemix/idemix_module.o ../rossmix2/rossmix2_module.o
+	$(F90) $(F90FLAGS) -I../tke -I../eke -I../idemix -I../rossmix2 -c restart.f90
 

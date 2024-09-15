@@ -14,9 +14,9 @@ diagnostics_module.o: diagnostics_module.f90
 	$(F90) $(F90FLAGS) -c diagnostics_module.f90
 
 diag_main.o: diag_main.f90 ../main/main_module.o ../tke/tke_module.o \
-             ../isoneutral/isoneutral_module.o ../eke/eke_module.o ../rossmix/rossmix_module.o\
+             ../isoneutral/isoneutral_module.o ../eke/eke_module.o ../rossmix/rossmix_module.o ../rossmix2/rossmix2_module.o\
              ../idemix/idemix_module.o ../tracer/tracer_module.o diagnostics_module.o
-	$(F90) $(F90FLAGS) $(CDFFLAGS) -I../main -I../tke -I../isoneutral -I../eke -I../idemix -I../rossmix -I../tracer -c diag_main.f90
+	$(F90) $(F90FLAGS) $(CDFFLAGS) -I../main -I../tke -I../isoneutral -I../eke -I../idemix -I../rossmix -I../rossmix2 -I../tracer -c diag_main.f90
 
 diag_averages.o: diag_averages.f90 ../main/main_module.o diagnostics_module.o
 	$(F90) $(F90FLAGS) $(CDFFLAGS) -I../main -c diag_averages.f90

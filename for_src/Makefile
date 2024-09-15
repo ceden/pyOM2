@@ -11,6 +11,7 @@ modules:
 	cd isoneutral; make isoneutral_module.o
 	cd idemix; make idemix_module.o
 	cd rossmix; make rossmix_module.o
+	cd rossmix2; make rossmix2_module.o
 	cd tke; make tke_module.o
 	cd obc; make obc_module.o
 	cd tracer; make tracer_module.o
@@ -23,6 +24,7 @@ all:    modules
 	cd eke; make
 	cd idemix; make
 	cd rossmix; make
+	cd rossmix2; make
 	cd isoneutral; make
 	cd external; make
 	cd non_hydrostatic; make
@@ -33,18 +35,18 @@ all:    modules
 
 config.o: all config.f90 
 	$(F90) $(F90FLAGS) $(CDFFLAGS) -Imain -Iisoneutral -Itke -Ieke \
-	 -Iidemix -Irossmix -Idiagnostics -Idensity -Iobc -Itracer -c config.f90
+	 -Iidemix -Irossmix -Irossmix2 -Idiagnostics -Idensity -Iobc -Itracer -c config.f90
 
 with_mpi: all config.o
 	cd parallel; make parallel_mpi.o
-	$(F90) main/*.o advection/*.o tke/*.o eke/*.o idemix/*.o rossmix/*.o isoneutral/*.o \
+	$(F90) main/*.o advection/*.o tke/*.o eke/*.o idemix/*.o rossmix/*.o rossmix2/*.o isoneutral/*.o \
 	 external/*.o non_hydrostatic/*.o density/*.o obc/*.o diagnostics/*.o  \
 	 tracer/*.o config.o parallel/parallel_mpi.o etc/timing_module.o\
 	 $(F90FLAGS) $(MPIFLAGS) $(CDFFLAGS)-o ../bin/model.x
 
 without_mpi: all config.o
 	cd parallel; make parallel_none.o
-	$(F90) main/*.o advection/*.o tke/*.o eke/*.o idemix/*.o rossmix/*.o isoneutral/*.o \
+	$(F90) main/*.o advection/*.o tke/*.o eke/*.o idemix/*.o rossmix/*.o rossmix2/*.o isoneutral/*.o \
 	 external/*.o non_hydrostatic/*.o density/*.o obc/*.o diagnostics/*.o \
 	 tracer/*.o config.o parallel/parallel_none.o etc/timing_module.o\
 	 $(F90FLAGS) $(CDFFLAGS)-o ../bin/model.x
@@ -58,7 +60,7 @@ time_step: all
             -Imain  -Idensity -Iobc obc/*.o density/*.o advection/*.o $(F90FLAGS) $(MPIFLAGS)   $(CDFFLAGS)  -o ../bin/model.x
 	cd main; rm time_step.o  # this is a bit dirty but otherwise two main entry points
 
-dirs = density diagnostics eke etc external idemix rossmix isoneutral main \
+dirs = density diagnostics eke etc external idemix rossmix rossmix2 isoneutral main \
        advection non_hydrostatic parallel tke obc tracer 
 clean: 
 	for d in $(dirs); do cd $$d && make clean && cd ..; done

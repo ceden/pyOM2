@@ -75,6 +75,7 @@ program main
 
         call tic('rossmix')
         call rossmix_main
+        call rossmix2_main
         call toc('rossmix')
 
         call tic('mom')
@@ -87,7 +88,11 @@ program main
            call integrate_tracer
         endif
         call toc('temp')
-       
+
+        call tic('rossmix')        
+        call rossmix2_integrate
+        call toc('rossmix')
+
         if (enable_eke .or. enable_tke .or. enable_idemix) call calculate_velocity_on_wgrid
 
         call tic('eke')
@@ -212,7 +217,7 @@ subroutine setup
   integer :: i,j,k
   real*8 :: fxa,fxb,dt_loc
  
-  if (my_pe==0) print'(/a/)','setting up everything'
+ if (my_pe==0) print'(/a/)','allocating work space'
 
 !--------------------------------------------------------------
 ! allocate everything
@@ -225,8 +230,14 @@ subroutine setup
   call allocate_eke_module
   call allocate_idemix_module
   call allocate_rossmix_module
+  call allocate_rossmix2_module
   call allocate_obc_module
   call allocate_tracer_module
+  
+  call fortran_barrier
+  if (my_pe==0) print'(/a/)','done allocating work space'
+
+  if (my_pe==0) print'(/a/)','setting up everything'
 
 !--------------------------------------------------------------
 !  Grid
@@ -250,6 +261,7 @@ subroutine setup
 !--------------------------------------------------------------
 !--------------------------------------------------------------
   call rossmix_initialize
+  call rossmix2_initialize  
 !--------------------------------------------------------------
 ! initial condition and forcing 
 !--------------------------------------------------------------

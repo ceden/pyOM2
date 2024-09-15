@@ -10,7 +10,8 @@ subroutine thermodynamics
  use main_module   
  use isoneutral_module   
  use tke_module   
- use rossmix_module   
+ use rossmix_module
+ use rossmix2_module
  use timing_module   
  implicit none
  integer :: i,j,k,ks
@@ -108,7 +109,8 @@ subroutine thermodynamics
  !---------------------------------------------------------------------------------
  !if (enable_rossmix .and. enable_rossmix_bolus_form) call rossmix_eddy_advect
  if (enable_rossmix) call rossmix_eddy_advect
-
+ if (enable_rossmix2) call rossmix2_eddy_advect
+ 
  call toc('iso')
 
  call tic('vmix')
