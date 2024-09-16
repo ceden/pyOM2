@@ -130,39 +130,40 @@ subroutine init_diag_overturning
     name = 'Meridional transport'; unit = 'm^3/s'
     call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
     call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
-    call ncapt (ncid,id, 'missing_value',NCDOUBLE,1,-1d33,iret)
-    call ncapt (ncid,id, '_FillValue', NCDOUBLE, 1,-1d33, iret)
+    call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+    call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
 
     id  = ncvdef (ncid,'vsf_iso',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
     name = 'Meridional transport'; unit = 'm^3/s'
     call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
     call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
-    call ncapt (ncid,id, 'missing_value',NCDOUBLE,1,-1d33,iret)
-    call ncapt (ncid,id, '_FillValue', NCDOUBLE, 1,-1d33, iret)
+    call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+    call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
 
 
     id  = ncvdef (ncid,'vsf_depth',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
     name = 'Meridional transport'; unit = 'm^3/s'
     call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
     call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
-    call ncapt (ncid,id, 'missing_value',NCDOUBLE,1,-1d33,iret)
-    call ncapt (ncid,id, '_FillValue', NCDOUBLE, 1,-1d33, iret)
+    call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+    call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
 
     if (enable_neutral_diffusion .and. enable_skew_diffusion) then
       id  = ncvdef (ncid,'bolus_iso',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
       name = 'Meridional transport'; unit = 'm^3/s'
       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
-      call ncapt (ncid,id, 'missing_value',NCDOUBLE,1,-1d33,iret)
-      call ncapt (ncid,id, '_FillValue', NCDOUBLE, 1,-1d33, iret)
+      call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+      call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
 
       id  = ncvdef (ncid,'bolus_depth',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
       name = 'Meridional transport'; unit = 'm^3/s'
       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
-      call ncapt (ncid,id, 'missing_value',NCDOUBLE,1,-1d33,iret)
-      call ncapt (ncid,id, '_FillValue', NCDOUBLE, 1,-1d33, iret)
-    endif
+      call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+      call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+ 
+ endif
 
 
     call ncendf(ncid, iret)
