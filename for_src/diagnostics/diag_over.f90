@@ -24,6 +24,7 @@ subroutine init_diag_overturning
  use main_module
  use isoneutral_module
  use module_diag_overturning
+ use rossmix2_module
  implicit none
  real*8 :: dsig,sigs,sige,get_rho
  integer :: i,j,k,n
@@ -44,7 +45,12 @@ subroutine init_diag_overturning
  allocate( mean_vsf_iso(js_pe-onx:je_pe+onx,nz) );mean_vsf_iso=0
  allocate( mean_vsf_depth(js_pe-onx:je_pe+onx,nz) );mean_vsf_depth=0
 
- if (enable_neutral_diffusion .and. enable_skew_diffusion) then
+ if ( (enable_neutral_diffusion .and. enable_skew_diffusion) .and. enable_rossmix2) then
+  if (my_pe==0) print*,'ERROR: skew diffusion and Rossmix2 is not possible'
+  call halt_stop(' in init_diag_overturing ')
+ endif
+ 
+ if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
   allocate( mean_bolus_iso(js_pe-onx:je_pe+onx,nz) );mean_bolus_iso=0
   allocate( mean_bolus_depth(js_pe-onx:je_pe+onx,nz) );mean_bolus_depth=0
  endif
@@ -61,6 +67,8 @@ subroutine init_diag_overturning
    print'(a,f12.6)',' Delta sigma0 = ',dsig
    if (enable_neutral_diffusion .and. enable_skew_diffusion) &
       print'(a)',      ' also calculating overturning by eddy-driven velocities' 
+   if (enable_rossmix2) &
+      print'(a)',      ' also calculating overturning by eddy-driven velocities from Rossmix2' 
  endif
  do k=1,nlevel
    sig(k) = sigs + dsig*(k-1)
@@ -148,7 +156,7 @@ subroutine init_diag_overturning
     call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
     call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
 
-    if (enable_neutral_diffusion .and. enable_skew_diffusion) then
+    if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
       id  = ncvdef (ncid,'bolus_iso',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
       name = 'Meridional transport'; unit = 'm^3/s'
       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
@@ -161,10 +169,8 @@ subroutine init_diag_overturning
       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
       call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
-      call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
- 
- endif
-
+      call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret) 
+    endif
 
     call ncendf(ncid, iret)
     iret= nf_put_vara_double(ncid,z_tid,(/1/),(/nz/),zt)
@@ -198,6 +204,7 @@ subroutine diag_overturning
  use main_module
  use isoneutral_module
  use module_diag_overturning
+ use rossmix2_module
  implicit none
  integer :: i,j,k,m,m1,m2,mm,mmp,mmm
  real*8 :: get_rho
@@ -257,6 +264,23 @@ subroutine diag_overturning
    enddo
    call zonal_sum_vec(bolus_trans(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
  endif
+ 
+ if (enable_rossmix2) then
+  ! eddy driven transports below isopycnals by Rossmix2
+  bolus_trans=0d0; 
+  do j=js_pe,je_pe
+   do m=1,nlevel
+    do k=1,nz
+      do i=is_pe,ie_pe
+       fxa = 0.5*( sig_loc(i,j,k) + sig_loc(i,j+1,k))
+       if (fxa > sig(m) )  bolus_trans(j,m) = bolus_trans(j,m) + ve(i,j,k)*dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)
+      enddo
+    enddo
+   enddo 
+  enddo
+  call zonal_sum_vec(bolus_trans(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+ endif 
+ 
 
  ! streamfunction on geopotentials
  vsf_depth = 0d0
@@ -273,16 +297,28 @@ subroutine diag_overturning
  if (enable_neutral_diffusion .and. enable_skew_diffusion) then
    ! streamfunction for eddy driven velocity on geopotentials
    bolus_depth = 0d0
-   if (enable_neutral_diffusion .and. enable_skew_diffusion) then
-    do j=js_pe,je_pe
-     do i=is_pe,ie_pe
+   do j=js_pe,je_pe
+    do i=is_pe,ie_pe
       bolus_depth(j,:) = bolus_depth(j,:) + dxt(i)*cosu(j)*b1_gm(i,j,:)
-     enddo
     enddo
-   endif
+   enddo
    call zonal_sum_vec(bolus_depth(js_pe:je_pe,:),nz*(je_pe-js_pe+1))
  endif
 
+ if (enable_rossmix2) then
+  ! streamfunction for eddy driven velocity by Rossmix2 on geopotentials
+  bolus_depth = 0d0  
+  do j=js_pe,je_pe
+   do i=is_pe,ie_pe
+    bolus_depth(j,:) = bolus_depth(j,:) + dxt(i)*cosu(j)*ve(i,j,:)*maskV(i,j,:)
+   enddo
+   do k=2,nz
+     bolus_depth(j,k) = bolus_depth(j,k-1) + bolus_depth(j,k)*dzt(k)
+   enddo     
+  enddo  
+  call zonal_sum_vec(bolus_depth(js_pe:je_pe,:),nz*(je_pe-js_pe+1)) 
+ endif
+ 
  ! interpolate from isopcnals to depth
  if (my_blk_i==1) then
   vsf_iso = 0d0
@@ -328,7 +364,7 @@ subroutine diag_overturning
  mean_trans = mean_trans + trans
  mean_vsf_iso = mean_vsf_iso + vsf_iso
  mean_vsf_depth = mean_vsf_depth + vsf_depth
- if (enable_neutral_diffusion .and. enable_skew_diffusion) then
+ if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
   mean_bolus_iso = mean_bolus_iso + bolus_iso
   mean_bolus_depth = mean_bolus_depth + bolus_depth
  endif
@@ -339,6 +375,7 @@ subroutine write_overturning
  use main_module
  use isoneutral_module
  use module_diag_overturning
+ use rossmix2_module
  implicit none
  include "netcdf.inc"
  integer :: ncid,iret,n
@@ -362,7 +399,7 @@ subroutine write_overturning
   mean_trans = mean_trans /nitts
   mean_vsf_iso = mean_vsf_iso /nitts
   mean_vsf_depth = mean_vsf_depth /nitts
-  if (enable_neutral_diffusion .and. enable_skew_diffusion) then
+  if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
    mean_bolus_iso = mean_bolus_iso /nitts
    mean_bolus_depth = mean_bolus_depth /nitts
   endif
@@ -380,7 +417,7 @@ subroutine write_overturning
    iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_vsf_iso(js_pe:je_pe,:))
    iret=nf_inq_varid(ncid,'vsf_depth',id)
    iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_vsf_depth(js_pe:je_pe,:))
-   if (enable_neutral_diffusion .and. enable_skew_diffusion) then
+   if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
      iret=nf_inq_varid(ncid,'bolus_iso',id)
      iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_iso(js_pe:je_pe,:))
      iret=nf_inq_varid(ncid,'bolus_depth',id)
@@ -395,7 +432,7 @@ subroutine write_overturning
  mean_trans = 0d0
  mean_vsf_iso = 0d0
  mean_vsf_depth =0d0
- if (enable_neutral_diffusion .and. enable_skew_diffusion) then
+ if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
    mean_bolus_iso = 0d0
    mean_bolus_depth = 0d0
  endif
@@ -410,6 +447,7 @@ subroutine diag_over_read_restart
  use main_module
  use isoneutral_module
  use module_diag_overturning
+ use rossmix2_module
  implicit none
  character (len=80) :: filename
  logical :: file_exists
@@ -448,7 +486,7 @@ subroutine diag_over_read_restart
        endif
        goto 10
  endif
- if (enable_neutral_diffusion .and. enable_skew_diffusion) then
+ if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
    read(io,err=10) mean_trans,mean_vsf_iso,mean_bolus_iso,mean_vsf_depth,mean_bolus_depth
  else
    read(io,err=10) mean_trans,mean_vsf_iso,mean_vsf_depth
@@ -469,6 +507,7 @@ subroutine diag_over_write_restart
  use main_module
  use isoneutral_module
  use module_diag_overturning
+ use rossmix2_module
  implicit none
  character (len=80) :: filename
  integer :: io,ierr
@@ -483,7 +522,7 @@ subroutine diag_over_write_restart
  open(io,file=filename,form='unformatted',status='unknown')
  write(io,err=10) nitts,ny,nz,nlevel
  write(io,err=10) js_pe,je_pe
- if (enable_neutral_diffusion .and. enable_skew_diffusion) then
+ if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
    write(io,err=10) mean_trans,mean_vsf_iso,mean_bolus_iso,mean_vsf_depth,mean_bolus_depth
  else
    write(io,err=10) mean_trans,mean_vsf_iso,mean_vsf_depth

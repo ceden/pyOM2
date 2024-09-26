@@ -52,8 +52,8 @@ diag_snap_tracer.o: diag_snap_tracer.f90 ../main/main_module.o ../tracer/tracer_
 diag_snap_tke.o: diag_snap_tke.f90 ../main/main_module.o ../tke/tke_module.o diagnostics_module.o
 	$(F90) $(F90FLAGS) $(CDFFLAGS) -I../main -I../tke -c diag_snap_tke.f90
 
-diag_over.o: diag_over.f90 ../main/main_module.o ../isoneutral/isoneutral_module.o 
-	$(F90) $(F90FLAGS) $(CDFFLAGS) -I../main -I../isoneutral -c diag_over.f90
+diag_over.o: diag_over.f90 ../main/main_module.o ../isoneutral/isoneutral_module.o ../rossmix2/rossmix2_module.o
+	$(F90) $(F90FLAGS) $(CDFFLAGS) -I../main -I../isoneutral -I../rossmix2 -c diag_over.f90
 
 diag_particles.o: diag_particles.f90 ../main/main_module.o 
 	$(F90) $(F90FLAGS) -I../main -c diag_particles.f90
