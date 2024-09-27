@@ -16,6 +16,10 @@ module module_diag_overturning
  real*8,allocatable :: mean_bolus_iso(:,:)
  real*8,allocatable :: mean_vsf_depth(:,:)
  real*8,allocatable :: mean_bolus_depth(:,:)
+ integer :: number_masks 
+ real*8,allocatable :: mask1(:,:),mask2(:,:),zarea_1(:,:),zarea_2(:,:)
+ real*8,allocatable :: mean_vsf_iso_1(:,:), mean_bolus_iso_1(:,:)
+ real*8,allocatable :: mean_vsf_iso_2(:,:), mean_bolus_iso_2(:,:)
 end module module_diag_overturning
 
 
@@ -73,8 +77,8 @@ subroutine init_diag_overturning
  do k=1,nlevel
    sig(k) = sigs + dsig*(k-1)
  enddo
-
- ! precalculate Area below z levels
+ 
+ ! precalculate area below z levels
  do j=js_pe,je_pe
   do i=is_pe,ie_pe
     zarea(j,:)=zarea(j,:)+dxt(i)*cosu(j)*maskV(i,j,:)
@@ -84,6 +88,48 @@ subroutine init_diag_overturning
   zarea(:,k) = zarea(:,k-1) + zarea(:,k)*dzt(k)
  enddo
  call zonal_sum_vec(zarea(js_pe:je_pe,:),nz*(je_pe-js_pe+1))
+
+ ! read in land masks
+ iret=nf_open('over_mask.nc',NF_NOWRITE,ncid)
+ if (iret == 0) then
+ 
+   if (my_pe==0) print*,' reading two regional masks from file over_mask.nc'
+   allocate( mean_vsf_iso_1(js_pe-onx:je_pe+onx,nz) );mean_vsf_iso_1=0
+   allocate( mean_vsf_iso_2(js_pe-onx:je_pe+onx,nz) );mean_vsf_iso_2=0
+   allocate( mean_bolus_iso_1(js_pe-onx:je_pe+onx,nz) );mean_bolus_iso_1=0
+   allocate( mean_bolus_iso_2(js_pe-onx:je_pe+onx,nz) );mean_bolus_iso_2=0
+   allocate( mask1(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx) );mask1=0
+   allocate( mask2(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx) );mask2=0
+   allocate( zarea_1(js_pe-onx:je_pe+onx,nz) ); zarea_1=0d0
+   allocate( zarea_2(js_pe-onx:je_pe+onx,nz) ); zarea_2=0d0
+
+   iret=nf_inq_varid(ncid,'mask1',id)
+   iret= nf_get_vara_double(ncid,id,(/is_pe,js_pe/), (/ie_pe-is_pe+1,je_pe-js_pe+1/),mask1(is_pe:ie_pe,js_pe:je_pe))
+   iret=nf_inq_varid(ncid,'mask2',id)
+   iret= nf_get_vara_double(ncid,id,(/is_pe,js_pe/), (/ie_pe-is_pe+1,je_pe-js_pe+1/),mask2(is_pe:ie_pe,js_pe:je_pe))
+   iret=nf_close(ncid)
+   number_masks = 2
+   call border_exchg_xy(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,mask1) 
+   call setcyclic_xy   (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,mask1)
+   call border_exchg_xy(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,mask2) 
+   call setcyclic_xy   (is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,mask2)
+
+   do j=js_pe,je_pe
+    do i=is_pe,ie_pe
+     zarea_1(j,:)=zarea_1(j,:)+dxt(i)*cosu(j)*maskV(i,j,:)*mask1(i,j)
+     zarea_2(j,:)=zarea_2(j,:)+dxt(i)*cosu(j)*maskV(i,j,:)*mask2(i,j)
+    enddo
+   enddo
+   do k=2,nz
+    zarea_1(:,k) = zarea_1(:,k-1) + zarea_1(:,k)*dzt(k)
+    zarea_2(:,k) = zarea_2(:,k-1) + zarea_2(:,k)*dzt(k)
+   enddo
+   call zonal_sum_vec(zarea_1(js_pe:je_pe,:),nz*(je_pe-js_pe+1))
+   call zonal_sum_vec(zarea_2(js_pe:je_pe,:),nz*(je_pe-js_pe+1))   
+ else
+   if (my_pe==0) print*,'WARNING: cannot read file over_mask.nc'
+   number_masks = 0
+ endif
 
  ! prepare cdf file for output
  if (my_pe==0) then
@@ -112,7 +158,6 @@ subroutine init_diag_overturning
     name = 'Height on U grid     '; unit = 'm'
     call ncaptc(ncid, z_uid, 'long_name', NCCHAR, len_trim(name), name, iret) 
     call ncaptc(ncid, z_uid, 'units',     NCCHAR, len_trim(unit), unit, iret) 
-
 
     Lat_udim  = ncddef(ncid,'yu', ny , iret)
     Lat_uid  = ncvdef (ncid,'yu',NCFLOAT,1,(/lat_udim/),iret)
@@ -148,13 +193,28 @@ subroutine init_diag_overturning
     call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
     call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
 
-
     id  = ncvdef (ncid,'vsf_depth',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
     name = 'Meridional transport'; unit = 'm^3/s'
     call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
     call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
     call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
     call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+
+    if (number_masks >0) then
+     id  = ncvdef (ncid,'vsf_mask1',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
+     name = 'Meridional transport'; unit = 'm^3/s'
+     call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+     call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+     call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+     call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+     
+     id  = ncvdef (ncid,'vsf_mask2',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
+     name = 'Meridional transport'; unit = 'm^3/s'
+     call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+     call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+     call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+     call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)   
+    endif
 
     if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
       id  = ncvdef (ncid,'bolus_iso',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
@@ -170,6 +230,23 @@ subroutine init_diag_overturning
       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
       call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
       call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret) 
+      
+      if (number_masks >0) then
+       id  = ncvdef (ncid,'bolus_mask1',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
+       name = 'Meridional transport'; unit = 'm^3/s'
+       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+       call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+       call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+     
+       id  = ncvdef (ncid,'bolus_mask2',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
+       name = 'Meridional transport'; unit = 'm^3/s'
+       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+       call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+       call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)   
+      endif
+            
     endif
 
     call ncendf(ncid, iret)
@@ -217,6 +294,17 @@ subroutine diag_overturning
  real*8 :: bolus_depth(js_pe-onx:je_pe+onx,nz)
  real*8 :: sig_loc(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
 
+ real*8 :: trans_1(js_pe-onx:je_pe+onx,nlevel)
+ real*8 :: z_sig_1(js_pe-onx:je_pe+onx,nlevel) 
+ real*8 :: trans_2(js_pe-onx:je_pe+onx,nlevel)
+ real*8 :: z_sig_2(js_pe-onx:je_pe+onx,nlevel) 
+ real*8 :: bolus_trans_1(js_pe-onx:je_pe+onx,nlevel)
+ real*8 :: bolus_trans_2(js_pe-onx:je_pe+onx,nlevel)
+ real*8 :: vsf_iso_1(js_pe-onx:je_pe+onx,nz)
+ real*8 :: vsf_iso_2(js_pe-onx:je_pe+onx,nz)
+ real*8 :: bolus_iso_1(js_pe-onx:je_pe+onx,nz)
+ real*8 :: bolus_iso_2(js_pe-onx:je_pe+onx,nz)
+ 
  ! sigma at p_ref
  do k=1,nz
   do j=js_pe,je_pe+1
@@ -244,6 +332,31 @@ subroutine diag_overturning
  call zonal_sum_vec(trans(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
  call zonal_sum_vec(z_sig(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
 
+ if (number_masks >0) then
+  trans_1=0d0; z_sig_1=0d0
+  trans_2=0d0; z_sig_2=0d0
+  do j=js_pe,je_pe
+   do m=1,nlevel
+    do k=1,nz
+     do i=is_pe,ie_pe
+       fxa = 0.5*( sig_loc(i,j,k) + sig_loc(i,j+1,k))
+       if (fxa > sig(m) ) then 
+         trans_1(j,m) = trans_1(j,m) + v(i,j,k,tau)*dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)*mask1(i,j)
+         z_sig_1(j,m) = z_sig_1(j,m) + dzt(k)*dxt(i)*cosu(j)*maskV(i,j,k)*mask1(i,j)
+         trans_2(j,m) = trans_2(j,m) + v(i,j,k,tau)*dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)*mask2(i,j)
+         z_sig_2(j,m) = z_sig_2(j,m) + dzt(k)*dxt(i)*cosu(j)*maskV(i,j,k)*mask2(i,j)
+       endif
+     enddo
+    enddo
+   enddo 
+  enddo  
+  call zonal_sum_vec(trans_1(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+  call zonal_sum_vec(z_sig_1(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+  call zonal_sum_vec(trans_2(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+  call zonal_sum_vec(z_sig_2(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+ endif
+ 
+
  if (enable_neutral_diffusion .and. enable_skew_diffusion) then
    ! eddy driven transports below isopycnals
    bolus_trans=0d0;
@@ -252,33 +365,87 @@ subroutine diag_overturning
      k=1
      do i=is_pe,ie_pe
       fxa = 0.5*( sig_loc(i,j,k) + sig_loc(i,j+1,k))
-      if (fxa > sig(m) ) bolus_trans(j,m) = bolus_trans(j,m) + b1_gm(i,j,k)*dxt(i)*cosu(j)*maskV(i,j,k)
+      if (fxa > sig(m) ) then
+        bolus_trans(j,m) = bolus_trans(j,m) + b1_gm(i,j,k)*dxt(i)*cosu(j)*maskV(i,j,k)
+      endif  
      enddo
      do k=2,nz
       do i=is_pe,ie_pe
        fxa = 0.5*( sig_loc(i,j,k) + sig_loc(i,j+1,k))
-       if (fxa > sig(m) ) bolus_trans(j,m) = bolus_trans(j,m) + (b1_gm(i,j,k)-b1_gm(i,j,k-1))*dxt(i)*cosu(j)*maskV(i,j,k)
+       if (fxa > sig(m) ) then
+          bolus_trans(j,m) = bolus_trans(j,m) + (b1_gm(i,j,k)-b1_gm(i,j,k-1))*dxt(i)*cosu(j)*maskV(i,j,k)
+       endif   
       enddo
      enddo
     enddo 
    enddo
    call zonal_sum_vec(bolus_trans(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+      
+   if (number_masks >0) then
+    bolus_trans_1=0d0; bolus_trans_2=0d0   
+    do j=js_pe,je_pe
+     do m=1,nlevel
+      k=1
+      do i=is_pe,ie_pe
+       fxa = 0.5*( sig_loc(i,j,k) + sig_loc(i,j+1,k))
+       if (fxa > sig(m) ) then
+        bolus_trans_1(j,m) = bolus_trans_1(j,m) + b1_gm(i,j,k)*dxt(i)*cosu(j)*maskV(i,j,k)*mask1(i,j)
+        bolus_trans_2(j,m) = bolus_trans_2(j,m) + b1_gm(i,j,k)*dxt(i)*cosu(j)*maskV(i,j,k)*mask2(i,j)
+       endif  
+      enddo
+      do k=2,nz
+       do i=is_pe,ie_pe
+        fxa = 0.5*( sig_loc(i,j,k) + sig_loc(i,j+1,k))
+        if (fxa > sig(m) ) then
+          bolus_trans_1(j,m) = bolus_trans_1(j,m) + (b1_gm(i,j,k)-b1_gm(i,j,k-1))*dxt(i)*cosu(j)*maskV(i,j,k)*mask1(i,j)
+          bolus_trans_2(j,m) = bolus_trans_2(j,m) + (b1_gm(i,j,k)-b1_gm(i,j,k-1))*dxt(i)*cosu(j)*maskV(i,j,k)*mask2(i,j)
+        endif   
+       enddo
+      enddo
+     enddo 
+    enddo  
+    call zonal_sum_vec(bolus_trans_1(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+    call zonal_sum_vec(bolus_trans_2(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+   endif 
+   
  endif
  
  if (enable_rossmix2) then
   ! eddy driven transports below isopycnals by Rossmix2
-  bolus_trans=0d0; 
+  bolus_trans=0d0;
   do j=js_pe,je_pe
    do m=1,nlevel
     do k=1,nz
       do i=is_pe,ie_pe
        fxa = 0.5*( sig_loc(i,j,k) + sig_loc(i,j+1,k))
-       if (fxa > sig(m) )  bolus_trans(j,m) = bolus_trans(j,m) + ve(i,j,k)*dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)
+       if (fxa > sig(m) )  then
+         bolus_trans(j,m) = bolus_trans(j,m) + ve(i,j,k)*dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)
+       endif  
       enddo
     enddo
    enddo 
   enddo
   call zonal_sum_vec(bolus_trans(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+  
+  if (number_masks >0) then
+   bolus_trans_1=0d0; bolus_trans_2=0d0
+   do j=js_pe,je_pe
+    do m=1,nlevel
+     do k=1,nz
+      do i=is_pe,ie_pe
+       fxa = 0.5*( sig_loc(i,j,k) + sig_loc(i,j+1,k))
+       if (fxa > sig(m) )  then
+         bolus_trans_1(j,m) = bolus_trans_1(j,m) + ve(i,j,k)*dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)*mask1(i,j)
+         bolus_trans_2(j,m) = bolus_trans_2(j,m) + ve(i,j,k)*dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)*mask2(i,j)
+       endif  
+      enddo
+     enddo
+    enddo 
+   enddo
+   call zonal_sum_vec(bolus_trans_1(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+   call zonal_sum_vec(bolus_trans_2(js_pe:je_pe,:),nlevel*(je_pe-js_pe+1))
+  endif
+  
  endif 
  
 
@@ -321,6 +488,7 @@ subroutine diag_overturning
  
  ! interpolate from isopcnals to depth
  if (my_blk_i==1) then
+ 
   vsf_iso = 0d0
   do j=js_pe,je_pe
    do k=1,nz
@@ -356,17 +524,99 @@ subroutine diag_overturning
      endif
    enddo
   enddo
+  
+  if (number_masks >0) then  
+   vsf_iso_1 = 0d0
+   do j=js_pe,je_pe
+    do k=1,nz
+     mm= minloc( (zarea_1(j,k)-z_sig_1(j,:))**2,1 )
+     mmp = min(mm+1,nlevel)
+     mmm = max(mm-1,1)
+     if     (z_sig_1(j,mm)>zarea_1(j,k) .and. z_sig_1(j,mmm) <= zarea_1(j,k) ) then
+         m1=mmm; m2=mm
+     elseif (z_sig_1(j,mm)>zarea_1(j,k) .and. z_sig_1(j,mmp) <= zarea_1(j,k) ) then
+         m1=mmp; m2=mm
+     elseif  (z_sig_1(j,mm)<zarea_1(j,k) .and. z_sig_1(j,mmp) >= zarea_1(j,k) ) then
+         m1=mm; m2=mmp
+     elseif  (z_sig_1(j,mm)<zarea_1(j,k) .and. z_sig_1(j,mmm) >= zarea_1(j,k) ) then
+         m1=mm; m2=mmm
+     else 
+         m1=mm;m2=mm
+     endif
+
+     fxa =  z_sig_1(j,m2)-z_sig_1(j,m1)
+     if (fxa /=0d0) then
+      if (zarea_1(j,k)-z_sig_1(j,m1) > z_sig_1(j,m2)-zarea_1(j,k) ) then
+       fxa = (zarea_1(j,k)-z_sig_1(j,m1))/fxa
+       vsf_iso_1(j,k)=trans_1(j,m1)*(1-fxa) + trans_1(j,m2)*fxa 
+       bolus_iso_1(j,k)=bolus_trans_1(j,m1)*(1-fxa) + bolus_trans_1(j,m2)*fxa  ! to save time
+      else
+       fxa = (z_sig_1(j,m2)-zarea_1(j,k))/fxa
+       vsf_iso_1(j,k)=trans_1(j,m1)*fxa + trans_1(j,m2)*(1-fxa) 
+       bolus_iso_1(j,k)=bolus_trans_1(j,m1)*fxa + bolus_trans_1(j,m2)*(1-fxa)
+      endif
+     else
+      vsf_iso_1(j,k)=trans_1(j,m1) 
+      bolus_iso_1(j,k)=bolus_trans_1(j,m1) 
+     endif
+    enddo
+   enddo 
  
- endif
+   vsf_iso_2 = 0d0
+   do j=js_pe,je_pe
+    do k=1,nz
+     mm= minloc( (zarea_2(j,k)-z_sig_2(j,:))**2,1 )
+     mmp = min(mm+1,nlevel)
+     mmm = max(mm-1,1)
+     if     (z_sig_2(j,mm)>zarea_2(j,k) .and. z_sig_2(j,mmm) <= zarea_2(j,k) ) then
+         m1=mmm; m2=mm
+     elseif (z_sig_2(j,mm)>zarea_2(j,k) .and. z_sig_2(j,mmp) <= zarea_2(j,k) ) then
+         m1=mmp; m2=mm
+     elseif  (z_sig_2(j,mm)<zarea_2(j,k) .and. z_sig_2(j,mmp) >= zarea_2(j,k) ) then
+         m1=mm; m2=mmp
+     elseif  (z_sig_2(j,mm)<zarea_2(j,k) .and. z_sig_2(j,mmm) >= zarea_2(j,k) ) then
+         m1=mm; m2=mmm
+     else 
+         m1=mm;m2=mm
+     endif
+
+     fxa =  z_sig_2(j,m2)-z_sig_2(j,m1)
+     if (fxa /=0d0) then
+      if (zarea_2(j,k)-z_sig_2(j,m1) > z_sig_2(j,m2)-zarea_2(j,k) ) then
+       fxa = (zarea_2(j,k)-z_sig_2(j,m1))/fxa
+       vsf_iso_2(j,k)=trans_2(j,m1)*(1-fxa) + trans_2(j,m2)*fxa 
+       bolus_iso_2(j,k)=bolus_trans_2(j,m1)*(1-fxa) + bolus_trans_2(j,m2)*fxa  ! to save time
+      else
+       fxa = (z_sig_2(j,m2)-zarea_2(j,k))/fxa
+       vsf_iso_2(j,k)=trans_2(j,m1)*fxa + trans_2(j,m2)*(1-fxa) 
+       bolus_iso_2(j,k)=bolus_trans_2(j,m1)*fxa + bolus_trans_2(j,m2)*(1-fxa)
+      endif
+     else
+      vsf_iso_2(j,k)=trans_2(j,m1) 
+      bolus_iso_2(j,k)=bolus_trans_2(j,m1) 
+     endif
+    enddo
+   enddo
+  endif
+ 
+ endif ! (my_blk_i==1)
 
  ! average in time
  nitts = nitts + 1
  mean_trans = mean_trans + trans
  mean_vsf_iso = mean_vsf_iso + vsf_iso
  mean_vsf_depth = mean_vsf_depth + vsf_depth
+ if (number_masks >0) then
+  mean_vsf_iso_1 = mean_vsf_iso_1 + vsf_iso_1
+  mean_vsf_iso_2 = mean_vsf_iso_2 + vsf_iso_2
+ endif
  if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
   mean_bolus_iso = mean_bolus_iso + bolus_iso
   mean_bolus_depth = mean_bolus_depth + bolus_depth
+  if (number_masks >0) then
+   mean_bolus_iso_1 = mean_bolus_iso_1 + bolus_iso_1
+   mean_bolus_iso_2 = mean_bolus_iso_2 + bolus_iso_2
+  endif
  endif
 end subroutine diag_overturning
 
@@ -399,9 +649,17 @@ subroutine write_overturning
   mean_trans = mean_trans /nitts
   mean_vsf_iso = mean_vsf_iso /nitts
   mean_vsf_depth = mean_vsf_depth /nitts
+  if (number_masks >0) then
+   mean_vsf_iso_1 = mean_vsf_iso_1 /nitts
+   mean_vsf_iso_2 = mean_vsf_iso_2 /nitts
+  endif
   if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
    mean_bolus_iso = mean_bolus_iso /nitts
    mean_bolus_depth = mean_bolus_depth /nitts
+   if (number_masks >0) then
+    mean_bolus_iso_1 = mean_bolus_iso_1 /nitts
+    mean_bolus_iso_2 = mean_bolus_iso_2 /nitts
+   endif
   endif
  endif
 
@@ -417,11 +675,23 @@ subroutine write_overturning
    iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_vsf_iso(js_pe:je_pe,:))
    iret=nf_inq_varid(ncid,'vsf_depth',id)
    iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_vsf_depth(js_pe:je_pe,:))
+   if (number_masks >0) then
+    iret=nf_inq_varid(ncid,'vsf_mask1',id)
+    iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_vsf_iso_1(js_pe:je_pe,:))
+    iret=nf_inq_varid(ncid,'vsf_mask2',id)
+    iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_vsf_iso_2(js_pe:je_pe,:))   
+   endif
    if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
      iret=nf_inq_varid(ncid,'bolus_iso',id)
      iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_iso(js_pe:je_pe,:))
      iret=nf_inq_varid(ncid,'bolus_depth',id)
      iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_depth(js_pe:je_pe,:))
+     if (number_masks >0) then
+      iret=nf_inq_varid(ncid,'bolus_mask1',id)
+      iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_iso_1(js_pe:je_pe,:))
+      iret=nf_inq_varid(ncid,'bolus_mask2',id)
+      iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_iso_2(js_pe:je_pe,:))
+     endif  
    endif
    iret=nf_close(ncid)
   endif
@@ -432,9 +702,17 @@ subroutine write_overturning
  mean_trans = 0d0
  mean_vsf_iso = 0d0
  mean_vsf_depth =0d0
+ if (number_masks >0) then
+  mean_vsf_iso_1 = 0d0
+  mean_vsf_iso_2 = 0d0
+ endif
  if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
    mean_bolus_iso = 0d0
    mean_bolus_depth = 0d0
+   if (number_masks >0) then
+    mean_bolus_iso_1 = 0d0
+    mean_bolus_iso_2 = 0d0
+   endif
  endif
 end subroutine write_overturning
 
@@ -491,6 +769,9 @@ subroutine diag_over_read_restart
  else
    read(io,err=10) mean_trans,mean_vsf_iso,mean_vsf_depth
  endif
+ if (number_masks >0) then
+   read(io,err=10) mean_vsf_iso_1,mean_bolus_iso_1,mean_vsf_iso_2,mean_bolus_iso_2
+ endif
  close(io)
  return
  10 continue
@@ -527,6 +808,9 @@ subroutine diag_over_write_restart
  else
    write(io,err=10) mean_trans,mean_vsf_iso,mean_vsf_depth
  endif
+ if (number_masks >0) then
+  write(io,err=10) mean_vsf_iso_1,mean_bolus_iso_1,mean_vsf_iso_2,mean_bolus_iso_2
+ endif 
  close(io)
  return
  10 continue
