@@ -22,8 +22,11 @@ module module_diag_overturning
  real*8,allocatable :: mean_vsf_iso_2(:,:), mean_bolus_iso_2(:,:)
  
  real*8,allocatable :: mean_heat_tr(:),mean_salt_tr(:)
+ real*8,allocatable :: mean_heat_tr_bolus(:),mean_salt_tr_bolus(:)
  real*8,allocatable :: mean_heat_tr_1(:),mean_salt_tr_1(:)
  real*8,allocatable :: mean_heat_tr_2(:),mean_salt_tr_2(:)
+ real*8,allocatable :: mean_heat_tr_bolus_1(:),mean_salt_tr_bolus_1(:)
+ real*8,allocatable :: mean_heat_tr_bolus_2(:),mean_salt_tr_bolus_2(:)
 end module module_diag_overturning
 
 
@@ -54,16 +57,17 @@ subroutine init_diag_overturning
  allocate( mean_vsf_depth(js_pe-onx:je_pe+onx,nz) );mean_vsf_depth=0
  allocate( mean_heat_tr(js_pe-onx:je_pe+onx) ); mean_heat_tr=0
  allocate( mean_salt_tr(js_pe-onx:je_pe+onx) ); mean_salt_tr=0
+ allocate( mean_heat_tr_bolus(js_pe-onx:je_pe+onx) ); mean_heat_tr_bolus=0
+ allocate( mean_salt_tr_bolus(js_pe-onx:je_pe+onx) ); mean_salt_tr_bolus=0
+ allocate( mean_bolus_iso(js_pe-onx:je_pe+onx,nz) );mean_bolus_iso=0
+ allocate( mean_bolus_depth(js_pe-onx:je_pe+onx,nz) );mean_bolus_depth=0
+
  
  if ( (enable_neutral_diffusion .and. enable_skew_diffusion) .and. enable_rossmix2) then
   if (my_pe==0) print*,'ERROR: skew diffusion and Rossmix2 is not possible'
   call halt_stop(' in init_diag_overturing ')
  endif
  
- if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
-  allocate( mean_bolus_iso(js_pe-onx:je_pe+onx,nz) );mean_bolus_iso=0
-  allocate( mean_bolus_depth(js_pe-onx:je_pe+onx,nz) );mean_bolus_depth=0
- endif
 
  ! sigma levels
  p_ref=2000.0
@@ -112,6 +116,10 @@ subroutine init_diag_overturning
    allocate( mean_salt_tr_1(js_pe-onx:je_pe+onx) ); mean_salt_tr_1=0
    allocate( mean_heat_tr_2(js_pe-onx:je_pe+onx) ); mean_heat_tr_2=0
    allocate( mean_salt_tr_2(js_pe-onx:je_pe+onx) ); mean_salt_tr_2=0
+   allocate( mean_heat_tr_bolus_1(js_pe-onx:je_pe+onx) ); mean_heat_tr_bolus_1=0
+   allocate( mean_salt_tr_bolus_1(js_pe-onx:je_pe+onx) ); mean_salt_tr_bolus_1=0
+   allocate( mean_heat_tr_bolus_2(js_pe-onx:je_pe+onx) ); mean_heat_tr_bolus_2=0
+   allocate( mean_salt_tr_bolus_2(js_pe-onx:je_pe+onx) ); mean_salt_tr_bolus_2=0
 
    iret=nf_inq_varid(ncid,'mask1',id)
    iret= nf_get_vara_double(ncid,id,(/is_pe,js_pe/), (/ie_pe-is_pe+1,je_pe-js_pe+1/),mask1(is_pe:ie_pe,js_pe:je_pe))
@@ -224,6 +232,20 @@ subroutine init_diag_overturning
     call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
     call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
 
+    id  = ncvdef (ncid,'heat_tr_bolus',NCFLOAT,2,(/lat_udim,itimedim/),iret)
+    name = 'Meridional heat transport'; unit = 'deg C m^3/s'
+    call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+    call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+    call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+    call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+
+    id  = ncvdef (ncid,'salt_tr_bolus',NCFLOAT,2,(/lat_udim,itimedim/),iret)
+    name = 'Meridional salt transport'; unit = 'g/kg m^3/s'
+    call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+    call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+    call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+    call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+
 
     if (number_masks >0) then
      id  = ncvdef (ncid,'vsf_mask1',NCFLOAT,3,(/lat_udim,z_udim,itimedim/),iret)
@@ -267,7 +289,7 @@ subroutine init_diag_overturning
      call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
      call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
      call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
-         
+ 
     endif
 
     if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
@@ -298,7 +320,36 @@ subroutine init_diag_overturning
        call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
        call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
        call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
-       call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)   
+       call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)  
+       
+       id  = ncvdef (ncid,'heat_tr_bolus_1',NCFLOAT,2,(/lat_udim,itimedim/),iret)
+       name = 'Meridional heat transport'; unit = 'deg C m^3/s'
+       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+       call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+       call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+
+       id  = ncvdef (ncid,'heat_tr_bolus_2',NCFLOAT,2,(/lat_udim,itimedim/),iret)
+       name = 'Meridional heat transport'; unit = 'deg C m^3/s'
+       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+       call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+       call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+
+       id  = ncvdef (ncid,'salt_tr_bolus_1',NCFLOAT,2,(/lat_udim,itimedim/),iret)
+       name = 'Meridional salt transport'; unit = 'g/kg m^3/s'
+       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+       call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+       call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+
+       id  = ncvdef (ncid,'salt_tr_bolus_2',NCFLOAT,2,(/lat_udim,itimedim/),iret)
+       name = 'Meridional salt transport'; unit = 'g/kg m^3/s'
+       call ncaptc(ncid, id, 'long_name', NCCHAR, len_trim(name), name, iret) 
+       call ncaptc(ncid, id, 'units',     NCCHAR, len_trim(unit), unit, iret) 
+       call ncapt (ncid,id, 'missing_value',NCFLOAT,1,-1e33,iret)
+       call ncapt (ncid,id, '_FillValue', NCFLOAT, 1,-1e33, iret)
+        
       endif
             
     endif
@@ -348,6 +399,7 @@ subroutine diag_overturning
  real*8 :: bolus_depth(js_pe-onx:je_pe+onx,nz)
  real*8 :: sig_loc(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz)
  real*8 :: heat_tr(js_pe-onx:je_pe+onx),salt_tr(js_pe-onx:je_pe+onx)
+ real*8 :: heat_tr_bolus(js_pe-onx:je_pe+onx),salt_tr_bolus(js_pe-onx:je_pe+onx)
  
  real*8 :: trans_1(js_pe-onx:je_pe+onx,nlevel)
  real*8 :: z_sig_1(js_pe-onx:je_pe+onx,nlevel) 
@@ -361,6 +413,8 @@ subroutine diag_overturning
  real*8 :: bolus_iso_2(js_pe-onx:je_pe+onx,nz)
  real*8 :: heat_tr_1(js_pe-onx:je_pe+onx),salt_tr_1(js_pe-onx:je_pe+onx)
  real*8 :: heat_tr_2(js_pe-onx:je_pe+onx),salt_tr_2(js_pe-onx:je_pe+onx)
+ real*8 :: heat_tr_bolus_1(js_pe-onx:je_pe+onx),salt_tr_bolus_1(js_pe-onx:je_pe+onx)
+ real*8 :: heat_tr_bolus_2(js_pe-onx:je_pe+onx),salt_tr_bolus_2(js_pe-onx:je_pe+onx)
  
  ! sigma at p_ref
  do k=1,nz
@@ -670,22 +724,25 @@ subroutine diag_overturning
    enddo
   enddo
  enddo
+ call zonal_sum_vec(heat_tr(js_pe:je_pe),je_pe-js_pe+1)
+ call zonal_sum_vec(salt_tr(js_pe:je_pe),je_pe-js_pe+1)
  
+ heat_tr_bolus = 0d0;salt_tr_bolus=0d0
  if (enable_neutral_diffusion .and. enable_skew_diffusion) then
   k=1
   do j=js_pe,je_pe 
    do i=is_pe,ie_pe
     fxa = dxt(i)*cosu(j)*maskV(i,j,k)*B1_gm(i,j,k)*0.5
-    heat_tr(j) = heat_tr(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
-    salt_tr(j) = salt_tr(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
+    heat_tr_bolus(j) = heat_tr_bolus(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
+    salt_tr_bolus(j) = salt_tr_bolus(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
    enddo
   enddo
   do k=2,nz
    do j=js_pe,je_pe 
     do i=is_pe,ie_pe
      fxa = dxt(i)*cosu(j)*maskV(i,j,k)*(B1_gm(i,j,k)-B1_gm(i,j,k-1))*0.5
-     heat_tr(j) = heat_tr(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
-     salt_tr(j) = salt_tr(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
+     heat_tr_bolus(j) = heat_tr_bolus(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
+     salt_tr_bolus(j) = salt_tr_bolus(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
     enddo
    enddo
   enddo
@@ -696,15 +753,15 @@ subroutine diag_overturning
    do j=js_pe,je_pe 
     do i=is_pe,ie_pe
      fxa = dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)*ve(i,j,k)*0.5
-     heat_tr(j) = heat_tr(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
-     salt_tr(j) = salt_tr(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
+     heat_tr_bolus(j) = heat_tr_bolus(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
+     salt_tr_bolus(j) = salt_tr_bolus(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
     enddo
    enddo
   enddo
  endif 
  
- call zonal_sum_vec(heat_tr(js_pe:je_pe),je_pe-js_pe+1)
- call zonal_sum_vec(salt_tr(js_pe:je_pe),je_pe-js_pe+1)
+ call zonal_sum_vec(heat_tr_bolus(js_pe:je_pe),je_pe-js_pe+1)
+ call zonal_sum_vec(salt_tr_bolus(js_pe:je_pe),je_pe-js_pe+1)
  
  ! meridional heat and salt transport in masked regions
  if (number_masks>0) then
@@ -721,28 +778,33 @@ subroutine diag_overturning
     enddo
    enddo
   enddo
-  
+  call zonal_sum_vec(heat_tr_1(js_pe:je_pe),je_pe-js_pe+1)
+  call zonal_sum_vec(salt_tr_1(js_pe:je_pe),je_pe-js_pe+1)
+  call zonal_sum_vec(heat_tr_2(js_pe:je_pe),je_pe-js_pe+1)
+  call zonal_sum_vec(salt_tr_2(js_pe:je_pe),je_pe-js_pe+1)
+ 
+  heat_tr_bolus_1=0d0;heat_tr_bolus_2=0d0;salt_tr_bolus_1=0d0;salt_tr_bolus_2=0d0
   if (enable_neutral_diffusion .and. enable_skew_diffusion) then
    k=1
    do j=js_pe,je_pe 
     do i=is_pe,ie_pe
      fxa = dxt(i)*cosu(j)*maskV(i,j,k)*mask1(i,j)*B1_gm(i,j,k)*0.5
-     heat_tr_1(j) = heat_tr_1(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
-     salt_tr_1(j) = salt_tr_1(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
+     heat_tr_bolus_1(j) = heat_tr_bolus_1(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
+     salt_tr_bolus_1(j) = salt_tr_bolus_1(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
      fxa = dxt(i)*cosu(j)*maskV(i,j,k)*mask2(i,j)*B1_gm(i,j,k)*0.5
-     heat_tr_2(j) = heat_tr_2(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
-     salt_tr_2(j) = salt_tr_2(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
+     heat_tr_bolus_2(j) = heat_tr_bolus_2(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
+     salt_tr_bolus_2(j) = salt_tr_bolus_2(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
     enddo
    enddo
    do k=2,nz
     do j=js_pe,je_pe 
      do i=is_pe,ie_pe
       fxa = dxt(i)*cosu(j)*maskV(i,j,k)*(B1_gm(i,j,k)-B1_gm(i,j,k-1))*mask1(i,j)*0.5
-      heat_tr_1(j) = heat_tr_1(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
-      salt_tr_1(j) = salt_tr_1(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
+      heat_tr_bolus_1(j) = heat_tr_bolus_1(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
+      salt_tr_bolus_1(j) = salt_tr_bolus_1(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
       fxa = dxt(i)*cosu(j)*maskV(i,j,k)*(B1_gm(i,j,k)-B1_gm(i,j,k-1))*mask2(i,j)*0.5
-      heat_tr_2(j) = heat_tr_2(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
-      salt_tr_2(j) = salt_tr_2(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
+      heat_tr_bolus_2(j) = heat_tr_bolus_2(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
+      salt_tr_bolus_2(j) = salt_tr_bolus_2(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
      enddo
     enddo
    enddo
@@ -753,20 +815,20 @@ subroutine diag_overturning
     do j=js_pe,je_pe 
      do i=is_pe,ie_pe
       fxa = dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)*mask1(i,j)*ve(i,j,k)*0.5
-      heat_tr_1(j) = heat_tr_1(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
-      salt_tr_1(j) = salt_tr_1(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
+      heat_tr_bolus_1(j) = heat_tr_bolus_1(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
+      salt_tr_bolus_1(j) = salt_tr_bolus_1(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
       fxa = dxt(i)*cosu(j)*dzt(k)*maskV(i,j,k)*mask2(i,j)*ve(i,j,k)*0.5
-      heat_tr_2(j) = heat_tr_2(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
-      salt_tr_2(j) = salt_tr_2(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
+      heat_tr_bolus_2(j) = heat_tr_bolus_2(j) + (temp(i,j,k,tau) + temp(i,j+1,k,tau))*fxa
+      salt_tr_bolus_2(j) = salt_tr_bolus_2(j) + (salt(i,j,k,tau) + salt(i,j+1,k,tau))*fxa
      enddo
     enddo
    enddo
   endif   
   
-  call zonal_sum_vec(heat_tr_1(js_pe:je_pe),je_pe-js_pe+1)
-  call zonal_sum_vec(salt_tr_1(js_pe:je_pe),je_pe-js_pe+1)
-  call zonal_sum_vec(heat_tr_2(js_pe:je_pe),je_pe-js_pe+1)
-  call zonal_sum_vec(salt_tr_2(js_pe:je_pe),je_pe-js_pe+1)
+  call zonal_sum_vec(heat_tr_bolus_1(js_pe:je_pe),je_pe-js_pe+1)
+  call zonal_sum_vec(salt_tr_bolus_1(js_pe:je_pe),je_pe-js_pe+1)
+  call zonal_sum_vec(heat_tr_bolus_2(js_pe:je_pe),je_pe-js_pe+1)
+  call zonal_sum_vec(salt_tr_bolus_2(js_pe:je_pe),je_pe-js_pe+1)
 
  endif
  
@@ -788,9 +850,15 @@ subroutine diag_overturning
  if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
   mean_bolus_iso = mean_bolus_iso + bolus_iso
   mean_bolus_depth = mean_bolus_depth + bolus_depth
+  mean_heat_tr_bolus = mean_heat_tr_bolus + heat_tr_bolus
+  mean_salt_tr_bolus = mean_salt_tr_bolus + salt_tr_bolus
   if (number_masks >0) then
    mean_bolus_iso_1 = mean_bolus_iso_1 + bolus_iso_1
    mean_bolus_iso_2 = mean_bolus_iso_2 + bolus_iso_2
+   mean_heat_tr_bolus_1 = mean_heat_tr_bolus_1 + heat_tr_bolus_1
+   mean_salt_tr_bolus_1 = mean_salt_tr_bolus_1 + salt_tr_bolus_1
+   mean_heat_tr_bolus_2 = mean_heat_tr_bolus_2 + heat_tr_bolus_2
+   mean_salt_tr_bolus_2 = mean_salt_tr_bolus_2 + salt_tr_bolus_2
   endif
  endif
 end subroutine diag_overturning
@@ -837,9 +905,15 @@ subroutine write_overturning
   if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
    mean_bolus_iso = mean_bolus_iso /nitts
    mean_bolus_depth = mean_bolus_depth /nitts
+   mean_heat_tr_bolus = mean_heat_tr_bolus /nitts
+   mean_salt_tr_bolus = mean_salt_tr_bolus /nitts
    if (number_masks >0) then
     mean_bolus_iso_1 = mean_bolus_iso_1 /nitts
     mean_bolus_iso_2 = mean_bolus_iso_2 /nitts
+    mean_heat_tr_bolus_1 = mean_heat_tr_bolus_1 /nitts
+    mean_salt_tr_bolus_1 = mean_salt_tr_bolus_1 /nitts
+    mean_heat_tr_bolus_2 = mean_heat_tr_bolus_2 /nitts
+    mean_salt_tr_bolus_2 = mean_salt_tr_bolus_2 /nitts
    endif
   endif
  endif
@@ -860,6 +934,7 @@ subroutine write_overturning
    iret= nf_put_vara_double(ncid,id,(/js_pe,ilen/), (/je_pe-js_pe+1,1/),mean_heat_tr(js_pe:je_pe))
    iret=nf_inq_varid(ncid,'salt_tr',id)
    iret= nf_put_vara_double(ncid,id,(/js_pe,ilen/), (/je_pe-js_pe+1,1/),mean_salt_tr(js_pe:je_pe))
+
    if (number_masks >0) then
     iret=nf_inq_varid(ncid,'vsf_mask1',id)
     iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_vsf_iso_1(js_pe:je_pe,:))
@@ -874,16 +949,31 @@ subroutine write_overturning
     iret=nf_inq_varid(ncid,'salt_tr_2',id)
     iret= nf_put_vara_double(ncid,id,(/js_pe,ilen/), (/je_pe-js_pe+1,1/),mean_salt_tr_2(js_pe:je_pe))
    endif
+   
    if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
      iret=nf_inq_varid(ncid,'bolus_iso',id)
      iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_iso(js_pe:je_pe,:))
      iret=nf_inq_varid(ncid,'bolus_depth',id)
      iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_depth(js_pe:je_pe,:))
+     
+     iret=nf_inq_varid(ncid,'heat_tr_bolus',id)
+     iret= nf_put_vara_double(ncid,id,(/js_pe,ilen/), (/je_pe-js_pe+1,1/),mean_heat_tr_bolus(js_pe:je_pe))
+     iret=nf_inq_varid(ncid,'salt_tr_bolus',id)
+     iret= nf_put_vara_double(ncid,id,(/js_pe,ilen/), (/je_pe-js_pe+1,1/),mean_salt_tr_bolus(js_pe:je_pe))
+
      if (number_masks >0) then
       iret=nf_inq_varid(ncid,'bolus_mask1',id)
       iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_iso_1(js_pe:je_pe,:))
       iret=nf_inq_varid(ncid,'bolus_mask2',id)
-      iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_iso_2(js_pe:je_pe,:))
+      iret= nf_put_vara_double(ncid,id,(/js_pe,1,ilen/), (/je_pe-js_pe+1,nz,1/),mean_bolus_iso_2(js_pe:je_pe,:))      
+      iret=nf_inq_varid(ncid,'heat_tr_bolus_1',id)
+      iret= nf_put_vara_double(ncid,id,(/js_pe,ilen/), (/je_pe-js_pe+1,1/),mean_heat_tr_bolus_1(js_pe:je_pe))
+      iret=nf_inq_varid(ncid,'salt_tr_bolus_1',id)
+      iret= nf_put_vara_double(ncid,id,(/js_pe,ilen/), (/je_pe-js_pe+1,1/),mean_salt_tr_bolus_1(js_pe:je_pe))
+      iret=nf_inq_varid(ncid,'heat_tr_bolus_2',id)
+      iret= nf_put_vara_double(ncid,id,(/js_pe,ilen/), (/je_pe-js_pe+1,1/),mean_heat_tr_bolus_2(js_pe:je_pe))
+      iret=nf_inq_varid(ncid,'salt_tr_bolus_2',id)
+      iret= nf_put_vara_double(ncid,id,(/js_pe,ilen/), (/je_pe-js_pe+1,1/),mean_salt_tr_bolus_2(js_pe:je_pe))      
      endif  
    endif
    iret=nf_close(ncid)
@@ -908,9 +998,15 @@ subroutine write_overturning
  if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
    mean_bolus_iso = 0d0
    mean_bolus_depth = 0d0
+   mean_heat_tr_bolus =0d0
+   mean_salt_tr_bolus =0d0
    if (number_masks >0) then
     mean_bolus_iso_1 = 0d0
     mean_bolus_iso_2 = 0d0
+    mean_heat_tr_bolus_1 =0d0
+    mean_salt_tr_bolus_1 =0d0
+    mean_heat_tr_bolus_2 =0d0
+    mean_salt_tr_bolus_2 =0d0
    endif
  endif
 end subroutine write_overturning
@@ -963,15 +1059,12 @@ subroutine diag_over_read_restart
        endif
        goto 10
  endif
- if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
-   read(io,err=10) mean_trans,mean_vsf_iso,mean_bolus_iso,mean_vsf_depth,mean_bolus_depth
- else
-   read(io,err=10) mean_trans,mean_vsf_iso,mean_vsf_depth
- endif
- read(io,err=10) mean_heat_tr,mean_salt_tr
+ read(io,err=10) mean_trans,mean_vsf_iso,mean_bolus_iso,mean_vsf_depth,mean_bolus_depth
+ read(io,err=10) mean_heat_tr,mean_salt_tr,mean_heat_tr_bolus,mean_salt_tr_bolus
  if (number_masks >0) then
    read(io,err=10) mean_vsf_iso_1,mean_bolus_iso_1,mean_vsf_iso_2,mean_bolus_iso_2
    read(io,err=10) mean_heat_tr_1,mean_salt_tr_1,mean_heat_tr_2,mean_salt_tr_2
+   read(io,err=10) mean_heat_tr_bolus_1,mean_salt_tr_bolus_1,mean_heat_tr_bolus_2,mean_salt_tr_bolus_2
  endif
  close(io)
  return
@@ -1004,15 +1097,12 @@ subroutine diag_over_write_restart
  open(io,file=filename,form='unformatted',status='unknown')
  write(io,err=10) nitts,ny,nz,nlevel
  write(io,err=10) js_pe,je_pe
- if ((enable_neutral_diffusion .and. enable_skew_diffusion).or.enable_rossmix2) then
-   write(io,err=10) mean_trans,mean_vsf_iso,mean_bolus_iso,mean_vsf_depth,mean_bolus_depth
- else
-   write(io,err=10) mean_trans,mean_vsf_iso,mean_vsf_depth
- endif
- write(io,err=10) mean_heat_tr,mean_salt_tr
+ write(io,err=10) mean_trans,mean_vsf_iso,mean_bolus_iso,mean_vsf_depth,mean_bolus_depth
+ write(io,err=10) mean_heat_tr,mean_salt_tr,mean_heat_tr_bolus,mean_salt_tr_bolus
  if (number_masks >0) then
   write(io,err=10) mean_vsf_iso_1,mean_bolus_iso_1,mean_vsf_iso_2,mean_bolus_iso_2
   write(io,err=10) mean_heat_tr_1,mean_salt_tr_1,mean_heat_tr_2,mean_salt_tr_2
+  write(io,err=10) mean_heat_tr_bolus_1,mean_salt_tr_bolus_1,mean_heat_tr_bolus_2,mean_salt_tr_bolus_2
  endif 
  close(io)
  return
