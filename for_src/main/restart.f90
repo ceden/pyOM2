@@ -8,7 +8,8 @@
      use tke_module   
      use eke_module   
      use idemix_module   
-     use rossmix2_module   
+     use rossmix2_module 
+     use biharmonic_thickness_module 
      implicit none
      integer, intent(in) :: itt_
      character*80 :: filename
@@ -52,6 +53,9 @@
      if (enable_tke) write(io,err=10) tke(is:ie,js:je,:,tau),tke(is:ie,js:je,:,taum1),K_diss_v(is:ie,js:je,:)
      if (enable_tke) write(io,err=10) dtke(is:ie,js:je,:,tau),dtke(is:ie,js:je,:,taum1)
      if (enable_rossmix2) write(io,err=10) E_r(is:ie,js:je,:,tau),E_r(is:ie,js:je,:,taum1)
+     !if (enable_biharmonic_thickness_heun)  write(io,err=10) us_thk(is:ie,js:je,:),vs_thk(is:ie,js:je,:)
+     if (enable_biharmonic_thickness_backscatter_integrate_energy ) &
+                write(io,err=10) e_back(is:ie,js:je,tau),e_back(is:ie,js:je,taum1)
      if (enable_idemix) then
        if (enable_idemix3) then
           write(io,err=10) F_s(is:ie,js:je,:,tau),F_s(is:ie,js:je,:,taum1)
@@ -94,7 +98,8 @@
      use tke_module   
      use eke_module   
      use idemix_module  
-     use rossmix2_module  
+     use rossmix2_module 
+     use biharmonic_thickness_module 
      implicit none
      integer, intent(out) :: itt_
      integer :: ierr,is_,ie_,js_,je_,is,ie,js,je
@@ -161,6 +166,10 @@
      if (enable_tke) read(io,err=10) tke(is:ie,js:je,:,tau),tke(is:ie,js:je,:,taum1),K_diss_v(is:ie,js:je,:)  ! we need this to calculate kappaM
      if (enable_tke) read(io,err=10) dtke(is:ie,js:je,:,tau),dtke(is:ie,js:je,:,taum1)
      if (enable_rossmix2) read(io,err=10) E_r(is:ie,js:je,:,tau),E_r(is:ie,js:je,:,taum1)
+     !if (enable_biharmonic_thickness_heun)  read(io,err=10) us_thk(is:ie,js:je,:),vs_thk(is:ie,js:je,:)
+     if (enable_biharmonic_thickness_backscatter_integrate_energy ) &
+                read(io,err=10) e_back(is:ie,js:je,tau),e_back(is:ie,js:je,taum1)
+ 
      if (enable_idemix) then
        if (enable_idemix3) then
           read(io,err=10) F_s(is:ie,js:je,:,tau), F_s(is:ie,js:je,:,taum1)

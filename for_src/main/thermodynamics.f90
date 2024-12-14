@@ -110,6 +110,8 @@ subroutine thermodynamics
  !if (enable_rossmix .and. enable_rossmix_bolus_form) call rossmix_eddy_advect
  if (enable_rossmix) call rossmix_eddy_advect
  if (enable_rossmix2) call rossmix2_eddy_advect
+ call biharmonic_thickness_mixing
+ 
  
  call toc('iso')
 

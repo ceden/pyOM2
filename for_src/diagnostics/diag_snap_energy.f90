@@ -84,23 +84,18 @@ subroutine init_snap_cdf_energy
       name = 'Dissipation of pot. En.'; unit = 'm^2/s^3'
       call dvcdf(ncid,id,name,32,unit,16,spval)
 
-      if (enable_TEM_friction.or.enable_biharmonic_thickness_mixing) then
-       dims = (/Lon_tdim,lat_tdim,z_udim,itimedim/)
-       id  = ncvdef (ncid,'K_diss_gm', NCFLOAT,4,dims,iret)
-       name = 'Dissipation of mean en.'; unit = 'm^2/s^3'
-       call dvcdf(ncid,id,name,32,unit,16,spval)
-      endif
-
+      dims = (/Lon_tdim,lat_tdim,z_udim,itimedim/)
+      id  = ncvdef (ncid,'K_diss_gm', NCFLOAT,4,dims,iret)
+      name = 'Dissipation of mean en.'; unit = 'm^2/s^3'
+      call dvcdf(ncid,id,name,32,unit,16,spval)
+ 
       if (enable_idemix .and. enable_idemix3) then
        dims = (/Lon_tdim,lat_tdim,z_udim,itimedim/)
        id  = ncvdef (ncid,'K_diss_idemix', NCFLOAT,4,dims,iret)
        name = 'Dissipation of mean en.'; unit = 'm^2/s^3'
-       call dvcdf(ncid,id,name,32,unit,16,spval)
-       
+       call dvcdf(ncid,id,name,32,unit,16,spval)       
       endif
-    
-
-      
+          
       call ncclos (ncid, iret)
  endif
    
@@ -174,17 +169,15 @@ subroutine diag_snap_energy
        iret= nf_put_vara_double(ncid,id,(/1,1,k,ilen/), (/nx,ny,1,1/),bloc)
    endif
 
-   if (enable_TEM_friction.or.enable_biharmonic_thickness_mixing) then
-     ! dissipation
-     bloc(is_pe:ie_pe,js_pe:je_pe) = K_diss_gm(is_pe:ie_pe,js_pe:je_pe,k)
-     where( maskW(is_pe:ie_pe,js_pe:je_pe,k) == 0.) bloc(is_pe:ie_pe,js_pe:je_pe) = spval
-     call pe0_recv_2D(nx,ny,bloc)
-     if (my_pe == 0 ) then   
+   ! dissipation
+   bloc(is_pe:ie_pe,js_pe:je_pe) = K_diss_gm(is_pe:ie_pe,js_pe:je_pe,k)
+   where( maskW(is_pe:ie_pe,js_pe:je_pe,k) == 0.) bloc(is_pe:ie_pe,js_pe:je_pe) = spval
+   call pe0_recv_2D(nx,ny,bloc)
+   if (my_pe == 0 ) then   
        iret=nf_inq_varid(ncid,'K_diss_gm',id)
        iret= nf_put_vara_double(ncid,id,(/1,1,k,ilen/), (/nx,ny,1,1/),bloc)
-     endif
    endif
-
+ 
    ! dissipation
    bloc(is_pe:ie_pe,js_pe:je_pe) = P_diss_v(is_pe:ie_pe,js_pe:je_pe,k)
    where( maskW(is_pe:ie_pe,js_pe:je_pe,k) == 0.) bloc(is_pe:ie_pe,js_pe:je_pe) = spval

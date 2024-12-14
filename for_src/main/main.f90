@@ -215,7 +215,7 @@ subroutine setup
   use idemix_module   
   implicit none
   integer :: i,j,k
-  real*8 :: fxa,fxb,dt_loc
+  real*8 :: fxa,fxb
  
  if (my_pe==0) print'(/a/)','allocating work space'
 
@@ -259,9 +259,11 @@ subroutine setup
   call calc_spectral_topo
 
 !--------------------------------------------------------------
+! other eddy closures
 !--------------------------------------------------------------
   call rossmix_initialize
   call rossmix2_initialize  
+  call biharmonic_thickness_initialize
 !--------------------------------------------------------------
 ! initial condition and forcing 
 !--------------------------------------------------------------
@@ -320,27 +322,6 @@ subroutine setup
      !call halt_stop('in setup')
    endif
   endif
-  
-  if (enable_biharmonic_thickness_mixing) then
-   fxa = 0.
-   dt_loc = dt_mom/biharmonic_thickness_mixing_iter
-   do k=1,nz
-    do j=js_pe,je_pe
-     do i=is_pe,ie_pe
-      fxb = A_thkbi*(cost(j)**biha_friction_cosPower)**2 * (1./10.)**2
-      fxa = max( fxa, fxb*dt_loc*2/(cost(j)*dxt(i))**2*2/dzt(k)**2 )
-      fxa = max( fxa, fxb*dt_loc*2/(        dyt(j))**2*2/dzt(k)**2 )
-     enddo 
-    enddo
-   enddo 
-   call global_max(fxa) 
-   if (my_pe==0) print*,' biharm. thickness diffusion max criterium = ',fxa
-   if (fxa>1) then
-     if (my_pe==0) print*,'ERROR: A_thkbi too large,  criterium must be <1'
-     !call halt_stop('in setup')
-   endif
-  endif
-  
-  
+    
 end subroutine setup
 

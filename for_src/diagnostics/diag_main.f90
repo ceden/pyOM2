@@ -142,6 +142,7 @@ subroutine diagnose
     if (enable_idemix) call diag_snap_idemix
     if (enable_rossmix) call diag_snap_rossmix
     if (enable_tracer) call diag_snap_tracer
+    call diag_snap_biharmonic_thickness
  endif
 
  if ( enable_diag_parallel_snap .and.  (mod(itt,int(snapint/dt_tracer)) ==0 .or. itt==0) ) then

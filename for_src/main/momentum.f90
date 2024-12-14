@@ -129,7 +129,8 @@ subroutine momentum
  if (enable_conserve_energy) K_diss_h = 0d0
  if (enable_hor_friction)        call harmonic_friction
  if (enable_biharmonic_friction) call biharmonic_friction
- if (enable_biharmonic_thickness_mixing) call biharmonic_thickness_mixing
+ call biharmonic_thickness_friction
+ 
  !---------------------------------------------------------------------------------
  ! Rayleigh and bottom friction
  !---------------------------------------------------------------------------------

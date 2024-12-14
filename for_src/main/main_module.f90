@@ -64,9 +64,6 @@ module main_module
       logical :: enable_hor_friction               = .false. ! enable horizontal friction
       logical :: enable_hor_diffusion              = .false. ! enable horizontal diffusion
       logical :: enable_biharmonic_friction        = .false. ! enable biharmonic horizontal friction
-      logical :: enable_biharmonic_thickness_mixing= .false. ! enable biharmonic thickness mixing (in res. mom. formulation)
-      logical :: enable_biharmonic_thickness_cut_upper = .false. ! cut upper XX meter for that formulation
-      logical :: enable_biharmonic_thickness_scale_A_thkbi_cut = .false. ! scale that parameter with cos(lat)**2
       logical :: enable_biharmonic_mixing          = .false. ! enable biharmonic horizontal mixing
       logical :: enable_hor_friction_cos_scaling   = .false. ! scaling of hor. viscosity with cos(latitude)**cosPower
       logical :: enable_ray_friction               = .false. ! enable Rayleigh damping
@@ -206,14 +203,6 @@ module main_module
       real*8 :: biha_friction_cosPower = 0.0    ! exponent n in cos(y)**n which multiplies A_hbi and A_thkbi
       real*8 :: biha_mixing_cosPower   = 0.0    ! same for K_hbi
       real*8 :: A_hbi = 0.0                     ! lateral biharmonic viscosity in m^4/s
-      real*8 :: A_thkbi = 0.0                   ! biharmonic thickness diffusivity in m^4/s
-      real*8 :: thkbi_f_min = 1e-6              ! threshold for Coriolis parameter in the formulation in 1/s
-      
-      integer:: biharmonic_thickness_mixing_iter = 1 ! iterations in sub loop for the formulation
-      real*8 :: A_thkbi_cut = 0.5
-      real*8 :: A_thkbi_cut_upper_len = 35.
-
-      real*8,allocatable ::  K_thkbi(:,:,:)     ! actual A_thkbi after clipping
       real*8 :: K_hbi = 0.0                     ! lateral biharmonic diffusivity in m^4/s
       real*8 :: kappaH_0 = 0.0, kappaM_0 = 0.0  ! fixed values for vertical viscosity/diffusivity which are set for no TKE model
       real*8, allocatable :: kappaM(:,:,:)      ! vertical viscosity in m^2/s
@@ -354,9 +343,7 @@ subroutine allocate_main_module
   allocate( v_wgrid(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz) ); v_wgrid = 0.0
   allocate( w_wgrid(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz) ); w_wgrid = 0.0
 
-  if (enable_biharmonic_thickness_mixing) then
-   allocate( K_thkbi(is_pe-onx:ie_pe+onx,js_pe-onx:je_pe+onx,nz) ); K_thkbi = 0.0
-  endif
+
 end subroutine allocate_main_module
 
 
