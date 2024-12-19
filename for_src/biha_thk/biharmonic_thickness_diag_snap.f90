@@ -73,7 +73,7 @@ subroutine init_snap_biharmonic_thickness
              
        if (enable_biharmonic_thickness_backscatter_integrate_energy) then
          id  = ncvdef (ncid,'E_back', NCFLOAT,3,(/Lon_tdim,lat_tdim,iTimedim/),iret)
-         name = 'Energy'; unit = 'm^2/s^2'
+         name = 'Energy'; unit = 'm^3/s^2'
          call dvcdf(ncid,id,name,32,unit,16,spval)      
        endif       
       endif
