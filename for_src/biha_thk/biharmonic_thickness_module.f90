@@ -19,7 +19,8 @@ module biharmonic_thickness_module
   real*8  :: mld0_thk = 75.0
   real*8  :: e_back_diff = 1000.0
   real*8  :: A_thk_max = 500.
-  real*8  :: L_back = 2e3
+  real*8  :: L_back = 40.
+  real*8  :: e_back_damp = 0.0
   
   logical :: enable_biharmonic_thickness_cut_upper = .false.         ! cut upper XX meter for explicit formulation
   logical :: enable_biharmonic_thickness_scale_A_thkbi_cut = .false. ! scale that parameter with cos(lat)**2 for explicit 

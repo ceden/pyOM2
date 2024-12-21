@@ -37,7 +37,8 @@ subroutine biharmonic_thickness_backscatter_energy
   do i=is_pe,ie_pe  
     fxa = (flux_east(i,j,nz) - flux_east(i-1,j,nz))/(cost(j)*dxt(i)) &
          +(flux_north(i,j,nz) -flux_north(i,j-1,nz))/(cost(j)*dyt(j)) 
-    e_back(i,j,taup1) = e_back(i,j,tau) + dt_tracer*(fxa + forc(i,j) - back(i,j) )*maskW(i,j,nz)
+    e_back(i,j,taup1) = (e_back(i,j,tau) + dt_tracer*( fxa + forc(i,j) - back(i,j) ) ) &
+                       /(1+dt_tracer*e_back_damp*e_back(i,j,tau))*maskW(i,j,nz)
   enddo
  enddo  
  call border_exchg_xy(is_pe-onx,ie_pe+onx,js_pe-onx,je_pe+onx,e_back(:,:,taup1)) 
@@ -46,8 +47,7 @@ subroutine biharmonic_thickness_backscatter_energy
  do k=1,nz
   do j=js_pe-onx,je_pe+onx
    do i=is_pe-onx,ie_pe+onx    
-    !A_thk(i,j,k) = - min(500d0, e_back_0*sqrt( max(0d0,2*e_back(i,j,tau)) ) ) old formulation
-    A_thk(i,j,k) = - min(A_thk_max, L_back*sqrt( max(0d0,e_back(i,j,tau)/max(1e-12,ht(i,j))) ) ) 
+    A_thk(i,j,k) = - min(A_thk_max, L_back*sqrt( max(0d0,e_back(i,j,tau)) ) )
    enddo
   enddo 
  enddo
