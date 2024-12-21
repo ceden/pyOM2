@@ -109,7 +109,7 @@ end subroutine diag_variance
        vrho(:,j,:) = vrho(:,j,:)/n - vmean(:,j,:)*0.5*( rhom(:,j,:)+rhom(:,j+1,:) )
      enddo
      do k=1,nz-1
-       wrho(:,:,k) = wrho(:,:,k)/n + wmean(:,:,k)*0.5*( rhom(:,:,k)+rhom(:,:,k+1) )
+       wrho(:,:,k) = wrho(:,:,k)/n - wmean(:,:,k)*0.5*( rhom(:,:,k)+rhom(:,:,k+1) )
      enddo
 !  apply  land mask
      where (maskU==0) 
