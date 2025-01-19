@@ -131,8 +131,16 @@ subroutine calc_grid
 !--------------------------------------------------------------
   call u_centered_grid(dzt,dzw,zt,zw,nz)
   !dzw(nz)=dzt(nz) !*0.5 ! this is accounted for in the model directly
-  zt = zt - zw(nz); zw = zw - zw(nz)  ! zero at zw(nz) 
-
+  
+  if (enable_set_zero_at_surface ) then
+   zt = zt - zw(nz); zw = zw - zw(nz)  ! z=0 at zw(nz) 
+  else
+   zt = zt + zw(2); zw = zw + zw(2)  ! p=0 at zw(0) for atmosphere setup which is upside down
+   
+   !zt = zt + zw(3); zw = zw + zw(3)  
+   !print*,zt
+   !stop
+  endif
 !--------------------------------------------------------------
 ! metric factors
 !--------------------------------------------------------------

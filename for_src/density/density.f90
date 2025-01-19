@@ -1,5 +1,46 @@
 
 
+module ideal_gas_eq_of_state
+!==========================================================================
+!  equation of state for an ideal gas atmosphere
+!  input is pressure in Pascal = kg/m/s^2 = 10^-4 dbar and  pot. temperature ct in Kelvin
+!  ct = T (p_c/p)^kappa, with in situ temperature T, reference pressure p_c, kappa=R/cp
+!  check section 1.5.2 of Vallis book 
+!  and https://mitgcm.readthedocs.io/en/latest/overview/hydro_prim_eqn.html
+!==========================================================================
+ implicit none
+ real*8,parameter,private  :: R_gas = 287.0 ! gas constant in J/kg/K
+ real*8,parameter,private  :: cp    = 1e3   ! specfic heat at const. pressure in J/kg/K 
+ real*8,parameter,private  :: p_c   = 1e5   ! reference pressure in Pascal, 1 bar = 10^5 Pa
+ real*8,parameter,private  :: kappa = R_gas/cp!, gamma = cp/(cp-R_gas) 
+ contains
+
+ real*8 function ideal_gas_eq_of_state_rho(ct,press)
+   real*8,intent(in) :: ct,press
+   real*8 :: exner,alpha
+   exner = cp*(press/p_c)**kappa ! Exner function 
+   alpha = kappa*exner*ct/press  ! specific volume in m^3/kg
+   ideal_gas_eq_of_state_rho = alpha*1024.0/9.81 ! to account for factors in hydrostatic equation
+ end function 
+
+end module ideal_gas_eq_of_state
+
+
+
+
+module no_eq_of_state
+!==========================================================================
+!  no equation of state, only buoyancy 
+!==========================================================================
+ implicit none
+ contains
+ real*8 function no_eq_of_state_rho(b)
+   real*8,intent(in) :: b  ! buoyancy = - g*rho/rho_0
+   no_eq_of_state_rho = -b*1024.0/9.81 ! to account for factors in hydrostatic equation
+ end function 
+end module no_eq_of_state
+
+
 
 
 module linear_eq_of_state

@@ -12,6 +12,8 @@ use nonlin1_eq_of_state
 use nonlin2_eq_of_state
 use nonlin3_eq_of_state
 use gsw_eq_of_state
+use ideal_gas_eq_of_state
+use no_eq_of_state
 implicit none
 real*8, intent(in) :: salt_loc,temp_loc,press
 
@@ -25,6 +27,10 @@ else if (eq_of_state_type == 4) then
  get_rho = nonlin3_eq_of_state_rho(salt_loc,temp_loc)
 else if (eq_of_state_type == 5) then
   get_rho = gsw_rho(salt_loc,temp_loc,press)
+else if (eq_of_state_type == 100) then
+  get_rho = ideal_gas_eq_of_state_rho(temp_loc,press)  
+else if (eq_of_state_type == 0) then
+  get_rho = no_eq_of_state_rho(temp_loc)    
 else 
  get_rho=0
  call halt_stop(' unknown equation of state in get_rho')
@@ -56,6 +62,10 @@ else if (eq_of_state_type == 4) then
  get_dyn_enthalpy = nonlin3_eq_of_state_dyn_enthalpy(salt_loc,temp_loc,press)
 else if (eq_of_state_type == 5) then
  get_dyn_enthalpy = gsw_dyn_enthalpy(salt_loc,temp_loc,press)
+else if (eq_of_state_type == 100) then
+ get_dyn_enthalpy = 0 
+else if (eq_of_state_type == 0) then 
+ get_dyn_enthalpy = 0
 else 
  get_dyn_enthalpy=0
  call halt_stop(' unknown equation of state in get_dyn_enthalpy')
@@ -83,7 +93,7 @@ else if (eq_of_state_type == 2) then
 else if (eq_of_state_type == 3) then
  get_salt = nonlin2_eq_of_state_salt(rho_loc,temp_loc,press_loc)
 else if (eq_of_state_type == 4) then
- get_salt = nonlin3_eq_of_state_salt(rho_loc,temp_loc)
+ get_salt = nonlin3_eq_of_state_salt(rho_loc,temp_loc) 
 else 
  get_salt=0
  call halt_stop(' unknown equation of state in get_salt')
@@ -114,6 +124,10 @@ else if (eq_of_state_type == 4) then
  get_drhodT = nonlin3_eq_of_state_drhodT(temp_loc)
 else if (eq_of_state_type == 5) then
  get_drhodT = gsw_drhodT(salt_loc,temp_loc,press_loc)
+else if (eq_of_state_type == 100) then
+ get_drhodT = 0  
+else if (eq_of_state_type == 0) then  
+ get_drhodT = 0
 else 
  get_drhodT = 0
  call halt_stop(' unknown equation of state in get_rho')
@@ -144,6 +158,10 @@ else if (eq_of_state_type == 4) then
  get_drhodS = nonlin3_eq_of_state_drhodS()
 else if (eq_of_state_type == 5) then
  get_drhodS = gsw_drhodS(salt_loc,temp_loc,press_loc)
+else if (eq_of_state_type == 100) then
+ get_drhodS = 0  
+else if (eq_of_state_type == 0) then  
+ get_drhodS = 0 
 else 
  get_drhodS = 0
  call halt_stop(' unknown equation of state in get_rho')
@@ -174,6 +192,10 @@ else if (eq_of_state_type == 4) then
  get_drhodp = nonlin3_eq_of_state_drhodp()
 else if (eq_of_state_type == 5) then
  get_drhodp = gsw_drhodp(salt_loc,temp_loc,press_loc)
+else if (eq_of_state_type == 100) then
+ get_drhodp = 0
+else if (eq_of_state_type == 0) then  
+ get_drhodp = 0
 else 
  get_drhodp = 0
  call halt_stop(' unknown equation of state in get_drhodp')
@@ -205,6 +227,10 @@ elseif (eq_of_state_type == 4) then
  get_int_drhodT = press_loc*nonlin3_eq_of_state_drhodT(temp_loc)
 elseif (eq_of_state_type == 5) then
  get_int_drhodT = -(1024.0/9.81)*gsw_dHdT(salt_loc,temp_loc,press_loc)
+else if (eq_of_state_type == 100) then
+ get_int_drhodT = 0
+else if (eq_of_state_type == 0) then  
+ get_int_drhodT = 0
 else 
  get_int_drhodT = 0
  call halt_stop(' unknown equation of state in get_int_drhodT')
@@ -235,6 +261,10 @@ elseif (eq_of_state_type == 4) then
  get_int_drhodS = press_loc*nonlin3_eq_of_state_drhodS()
 elseif (eq_of_state_type == 5) then
  get_int_drhodS = -(1024.0/9.81)*gsw_dHdS(salt_loc,temp_loc,press_loc)
+else if (eq_of_state_type == 100) then
+ get_int_drhodS = 0
+else if (eq_of_state_type == 0) then  
+ get_int_drhodS = 0
 else 
  get_int_drhodS = 0
  call halt_stop(' unknown equation of state in get_int_rho')

@@ -58,6 +58,7 @@ module main_module
       logical :: coord_degree                      = .false. ! either spherical (true) or cartesian (false) coordinates 
       logical :: enable_cyclic_x                   = .false. ! enable zonal cyclic boundary conditions 
       logical :: enable_cyclic_y                   = .false. ! enable meridional cyclic boundary conditions
+      logical :: enable_set_zero_at_surface        = .true.  ! set surface to z=0
       integer :: eq_of_state_type = 1                        ! equation of state: 1: linear, 3: nonlinear with comp., 5: TEOS
       logical :: enable_implicit_vert_friction     = .false. ! enable implicit vertical friction
       logical :: enable_explicit_vert_friction     = .false. ! enable explicit vertical friction
